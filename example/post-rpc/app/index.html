@@ -1,0 +1,69 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body style="background: #f3f3f3;">
+    <iframe width="100%" height="3000px" src="/post-rpc/plugin/" style="border: none;" sandbox="allow-scripts"></iframe>
+	<script type="text/javascript" src="js/PostRPC.Server.min.js"></script>
+    <script type="text/javascript">
+
+
+      // PostRPC App
+      //
+
+		var add = function (a, b) {
+			return a + b;
+		};
+
+		var multiply = function (a, b) {
+			return a * b;
+		};
+
+		var getForms = function (workspaceID) {
+			return [
+				{id: 70001, field1: 'A', field2: 1},
+				{id: 70002, field1: 'B', field2: 2},
+				{id: 70003, field1: 'C', field2: 2}
+			];
+		};
+
+		var getRecords = function (formID) {
+			return [
+				{id: 70001, field1: 'A', field2: 1},
+				{id: 70002, field1: 'B', field2: 2},
+				{id: 70003, field1: 'C', field2: 2}
+			];
+		};
+
+		document.addEventListener("DOMContentLoaded", function(event) {
+
+			console.log("App: DOM loaded and parsed");
+
+			var server = new window.PostRPC.Server('http://localhost:5001');
+			server.logging(true);
+
+			server.register('add', {a: 'Number', b: 'Number'}, 'Number', add);
+			server.register('multiply', {a: 'Number', b: 'Number'}, 'Number', multiply);
+			server.register('getForms', {workspaceID: 'Number'}, 'Array', getForms);
+			server.register('getRecords', {formID: 'Number'}, 'Array', getRecords);
+
+			console.log(server.name, 'registered', server.registered);
+
+			server.start();
+
+			setTimeout(function() {
+				console.log('App: ','publishing: something');
+			 	server.publish('something', {something: 'Not interesting'});
+			}, 2000);
+
+			setTimeout(function() {
+				console.log('App: ','publishing: changed');
+			 	server.publish('changed', {recordID: 101, field1: 1, field2: 'A'});
+			}, 3000);
+
+
+		});
+
+    </script>
+  </body>
+</html>
