@@ -1,0 +1,63 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body style="background: #fefefe;">
+    <h1>PostRPC Plugin</h1>
+    <div id="content">
+    </div>
+ 	<script type="text/javascript" src="js/PostRPC.Client.min.js"></script>
+    <script type="text/javascript">
+      // PostRPC Plugin iFrame
+      //
+
+		var display = function (request, response) {
+			console.log('Plugin: request: ', request, 'response: ', response);
+			var content = document.getElementById('content');
+			var output = '';
+			output = output + '<div>Request: '+JSON.stringify(request)+'</div><br>';
+			output = output + '<div>Response: '+JSON.stringify(response)+'</div><br>';
+			content.innerHTML = content.innerHTML+'<div>'+output+'</div><br>';
+		}
+
+		document.addEventListener("DOMContentLoaded", function(event) {
+
+			console.log("Plugin: DOM loaded and parsed");
+
+			var client = new window.PostRPC.Client('http://localhost:5001');
+			client.logging(true);
+			client.start();
+
+			client.subscribe('changed', function(response) {
+				display(null, response);
+			});
+
+			client.call(null, null, function(response) {
+				display(client.request(null, null, 1), response);
+			});
+
+			client.call('subtract', {a: 11}, function(response) {
+				display(client.request('subtract', {a: 11}, 2), response);
+			});
+
+			client.call('subtract', {a: 11, b: -8}, function(response) {
+				display(client.request('subtract', {a: 11, b: -8}, 3), response);
+			});
+
+			client.call('divide', {a: 2, b: 0}, function(response) {
+				display(client.request('divide', {a: 2, b: 0}, 4), response);
+			});
+
+			client.call('digits', {num: 1, n: 500}, function(response) {
+				display(client.request('digits', {num: 1, n: 500}, 5), response);
+			});
+
+			client.call('add', {a: 2, b: 2}, function(response) {
+				display(client.request('add', {a: 2, b: 2}, 6), response);
+			});
+
+		});
+
+    </script>
+  </body>
+</html>
