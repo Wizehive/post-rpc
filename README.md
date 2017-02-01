@@ -18,13 +18,38 @@ var server = new window.PostRPC.Server('http://localhost:5001');
 
 ```
 
-In order to respond to client RPC requests, the server must register each RCP method, describing its parameters and return, and associate it with the function that performs the actual work:
+In order to respond to client RPC requests, the server must register each RCP method, describing it and binding it to a function:
 
 ```
-server.register('add', {a: 'Number', b: 'Number'}, 'Number', add);
+server.register('add',[['a', 'Number'], ['b', 'Number']], 'Number', add);
 
-server.register('multiply', {a: 'Number', b: 'Number'}, 'Number', multiply);
+server.register('subtract', [['a', 'Number'], ['b', 'Number']], 'Number', divide);
+
+server.register('multiply', [['a', 'Number'], ['b', 'Number']], 'Number', multiply);
+
+server.register('divide', [['a', 'Number'], ['b', 'Number']], 'Number', divide);
+
+server.register('digits', [['num', 'Number'], ['n', 'Number']], 'Number', digits);
+
+server.register('getForms', [['workspaceID', 'Number']], 'Array', getForms);
+
+server.register('getRecords', [['formID', 'Number']], 'Array', getRecords);		
 ```
+
+The *register* method takes three parameters. First is the name of the RPC method. The second is an array describing the parameters required by the RPC. The third parameter describes the RPC return type. The final parameter is the function in the servers namespace that performs the work of the RPC.
+
+Supported parameter and return types include:
+
+| Type          |
+| ------------- |
+| Boolean       |
+| Null          |
+| Undefined     |
+| Number        |
+| String        |
+| Symbol        |
+| Object        |
+| Array         |
 
 After all RPC's are register, you must start the server, so that it begins handling postMessage events on the parent window:
 

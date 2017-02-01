@@ -15,8 +15,20 @@
 			return a + b;
 		};
 
+		var subtract = function (a, b) {
+			return a - b;
+		};
+
 		var multiply = function (a, b) {
 			return a * b;
+		};
+
+		var divide = function (a, b) {
+			return a / b;
+		};
+
+		var digits = function (num, n) {
+			return num.toPrecision(n);
 		};
 
 		var getForms = function (workspaceID) {
@@ -42,12 +54,21 @@
 			var server = new window.PostRPC.Server('http://localhost:5001');
 			server.logging(true);
 
-			server.register('add', {a: 'Number', b: 'Number'}, 'Number', add);
-			server.register('multiply', {a: 'Number', b: 'Number'}, 'Number', multiply);
-			server.register('getForms', {workspaceID: 'Number'}, 'Array', getForms);
-			server.register('getRecords', {formID: 'Number'}, 'Array', getRecords);
+			server.register('add',[['a', 'Number'], ['b', 'Number']], 'Number', add, 'Calculate the sum of two numbers');
 
-			console.log(server.name, 'registered', server.registered);
+			server.register('subtract', [['a', 'Number'], ['b', 'Number']], 'Number', subtract, 'Calculate the difference between two numbers');
+
+			server.register('multiply', [['a', 'Number'], ['b', 'Number']], 'Number', multiply, 'Calculate the product of two numbers');
+
+			server.register('divide', [['a', 'Number'], ['b', 'Number']], 'Number', divide, 'Calculate the divsion of two numbers');
+
+			server.register('digits', [['num', 'Number'], ['n', 'Number']], 'Number', digits, 'Set the precicion for a number');
+
+			server.register('getForms', [['workspaceID', 'Number']], 'Array', getForms, 'Get a list of forms for a workspace');
+
+			server.register('getRecords', [['formID', 'Number']], 'Array', getRecords, 'Get a batch of record for a form');
+
+			server.logRegistered();
 
 			server.start();
 

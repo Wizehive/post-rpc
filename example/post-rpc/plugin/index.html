@@ -36,12 +36,24 @@
 				display(client.request(null, null, 1), response);
 			});
 
-			client.call('divide', {a: 8, b: 2}, function(response) {
-				display(client.request('divide', {a: 8, b: 2}, 2), response);
+			client.call('subtract', {a: 11}, function(response) {
+				display(client.request('subtract', {a: 11}, 2), response);
+			});
+
+			client.call('subtract', {a: 11, b: -8}, function(response) {
+				display(client.request('subtract', {a: 11, b: -8}, 3), response);
+			});
+
+			client.call('divide', {a: 2, b: 0}, function(response) {
+				display(client.request('divide', {a: 2, b: 0}, 4), response);
+			});
+
+			client.call('digits', {num: 1, n: 500}, function(response) {
+				display(client.request('digits', {num: 1, n: 500}, 5), response);
 			});
 
 			client.call('add', {a: 2, b: 2}, function(response) {
-				display(client.request('add', {a: 2, b: 2}, 3), response);
+				display(client.request('add', {a: 2, b: 2}, 6), response);
 			});
 
 		});

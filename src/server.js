@@ -49,6 +49,8 @@ const internalErrorCode = -32603,
 	  internalErrorMessage = 'Internal error',
 	  internalErrorData = 'Internal JSON-RPC error.';
 
+const errorCode = -32000;
+
 export default class PostRPCServer {
 
 	/**
@@ -95,18 +97,21 @@ export default class PostRPCServer {
 	 * @param {Function} func function to perform call
 	 * @return {Undefined}
 	*/
-	register(method, params, ret, func) {
+	register(method, params, ret, func, desc) {
 		this.log([
 			'register',
 			'method: ' + method,
 			'params: ' + JSON.stringify(params),
-			'ret: ' + JSON.stringify(ret),
-			'function: function() {}'
+			'return: ' + JSON.stringify(ret),
+			'function: function() {}',
+			'description: ' + desc
+
 		]);
 		this._registered[method] = {
 			params: params,
 			return: ret,
-			function: func
+			function: func,
+			description: desc
 		};
 	}
 
@@ -244,12 +249,17 @@ export default class PostRPCServer {
 	 * JSON-RPC v2 failure response
 	 * @return {Object} response
 	*/
-	failure(error, id) {
+	failure(code, message, data, id) {
 		return {
 			jsonrpc: jsonrpc,
-			error: error,
+			error: {
+				code: code,
+				message: message,
+				data: data
+			},
 			id: id
 		};
+
 	}
 
 	/**
@@ -300,6 +310,29 @@ export default class PostRPCServer {
 	}
 
 	/**
+	 * Map given parameters according to required
+	 * @param {Object|Array} given
+	 * @param {Array[Array]} required
+	 * @return {Array} params
+	*/
+	mapParams(given, required) {
+		var params = [];
+		for (var i = 0; i < required.length; i++) {
+			var p = required[i];
+			if (Array.isArray(given)) {
+				if (i < given.length) {
+					params.push(given[i]);
+				}
+			} else if (given !== null && typeof given === 'object') {
+				if (p[0] in given) {
+					params.push(given[p[0]]);
+				}
+			}
+		}
+		return params;
+	}
+
+	/**
 	 * Handle postMessage events for parent window
 	 * @param {Object} event
 	 * @return {Undefined}
@@ -328,15 +361,25 @@ export default class PostRPCServer {
 
 			} else {
 
-				var func = this._registered[request.method].function;
-				var result = null;
-				if (Array.isArray(request.params)) {
-					result = func(...request.params);
-				} else if (request.params !== null && typeof request.params === 'object') {
-					result = func(...(Object.values(request.params)));
+				var rpc = this._registered[request.method];
+				var func = rpc.function;
+				var args = this.mapParams(request.params, rpc.params);
+				if (args.length !== rpc.params.length) {
+					messages.push('post invalid params');
+					event.source.postMessage(this.invalidParamsResponse(request), '*');
+				} else {
+					messages.push('call: ' + request.method + '(' + args.join(', ') + ')');
+					try {
+						var result = func(...args);
+						messages.push('return: ' + JSON.stringify(result));
+						messages.push('post success');
+						event.source.postMessage(this.success(result, request.id), '*');
+					} catch(err) {
+						messages.push('error: name: ' + err.name + ', message: ' + err.message);
+						messages.push('post failure');
+						event.source.postMessage(this.failure(errorCode, err.name, err.message, request.id), '*');
+					}
 				}
-				messages.push('post success');
-				event.source.postMessage(this.success(result, request.id), '*');
 
 			}
 		// }
@@ -366,6 +409,72 @@ export default class PostRPCServer {
 			for (var i = 0; i < messages.length; i++) {
 				console.log('%c%s', 'color:' + color, messages[i]);
 			}
+			console.groupEnd();
+		}
+	}
+
+	/**
+	 * Log all registered RPC's
+	 * @return {Array[Object]} rpcs
+	 */
+	logRegistered(color = 'blue') {
+		if (this._logging) {
+			console.group(this._name);
+			console.group('registered');
+
+			var self = this;
+			var arr = Object.keys(self._registered).map(function (key) {
+				return [key, self._registered[key]];
+			});
+			var sorted = arr.sort(function (a, b) {
+				if (a[0] < b[0]) {
+					return -1;
+				}
+				if (a[0] > b[0]) {
+					return 1;
+				}
+				return 0;
+			});
+			for (var i = 0; i < sorted.length; i++) {
+
+				var messages = [];
+				var method = sorted[i][0];
+				var r = sorted[i][1];
+				var params = [];
+				var params2 = [];
+
+				messages.push('/**');
+				messages.push(' * ' + r.description);
+				var types = {
+					'Boolean': 'true',
+					'Null': 'null',
+					'Undefined': 'undefined',
+					'Number': '1',
+					'String': 'str',
+					'Object': '{a: 1}',
+					'Array': '[1,2]'
+				};
+
+				for (var j = 0; j < r.params.length; j++) {
+					var p = r.params[j];
+					messages.push(' * @param {' + p[1] + '} ' + p[0]);
+					params.push(p[0]);
+					params2.push(p[0] + ': ' + types[p[1]]);
+				}
+
+				messages.push(' * @return {' + r.return + '}');
+				messages.push(' */');
+				messages.push(method + '(' + params.join(', ') + ')');
+				messages.push('client.call(\'' + method + '\', {' + params2.join(', ') + '}, func)');
+
+				console.groupCollapsed(method);
+				for (var k = 0; k < messages.length; k++) {
+					console.log('%c%s', 'color:' + color, messages[k]);
+				}
+				console.groupEnd();
+			}
+
+			console.groupEnd();
 			console.groupEnd();
 		}
 	}
