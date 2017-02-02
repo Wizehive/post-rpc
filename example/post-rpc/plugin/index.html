@@ -61,6 +61,14 @@
 				display(client.request('add', {a: 2, b: 2}, 6), null, error);
 		    });
 
+			client.call('getForms', {workspaceID: 11}, function(result, error) {
+				display(client.request('getForms', {workspaceID: 11}, 7), result, error);
+			});
+
+			client.call('getRecords', {formID: 101}, function(result, error) {
+				display(client.request('getRecords', {formID: 101}, 7), result, error);
+			});
+
 		});
 
     </script>
