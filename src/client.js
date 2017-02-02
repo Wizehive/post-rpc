@@ -32,11 +32,17 @@
  *
  */
 
+var Promise = require('native-promise-only');
+
 const jsonrpc = '2.0';
 
 const timeoutCode = -32001,
 	  timeoutMessage = 'Timeout',
 	  timeoutData = 'The server didn\'t respond to request within timeframe allowed.';
+
+const internalErrorCode = -32603,
+	  internalErrorMessage = 'Internal error',
+	  internalErrorData = 'Internal JSON-RPC error.';
 
 export default class PostRPCClient {
 
@@ -162,6 +168,22 @@ export default class PostRPCClient {
 	}
 
 	/**
+	 * JSON-RPC v2+ internal error response
+	 * @return {Object} response
+	*/
+	internalErrorResponse(id) {
+		return {
+			jsonrpc: jsonrpc,
+			error: {
+				code: internalErrorCode,
+				message: internalErrorMessage,
+				data: internalErrorData
+			},
+			id: id
+		};
+	}
+
+	/**
 	 * Call a registered RPC
 	 * @param {String} method
 	 * @param {Object|Array} params
@@ -169,24 +191,39 @@ export default class PostRPCClient {
 	 * @param {Number} timeout in MS to await response
 	 * @return {Undefined}
 	*/
-	call(method, params, callback, timeout = 5000) {
+	call(method, params, callback = null, timeout = 5000) {
 		this.log([
 			'call',
 			'method: ' + method,
 			'params: ' + JSON.stringify(params),
-			'callback: function() {}',
-			'timeout: ' + timeout
+			'timeout: ' + timeout,
+			'callback: function() {}'
 		]);
+
+		var promise = null;
+		var resolve = null;
+		var reject = null;
+
+		if (callback === null) {
+			promise = new Promise(function (res, rej) {
+				resolve = res;
+				reject = rej;
+			});
+		}
+
 		this._queue.push({
 			method: method,
 			params: params,
 			id: this.id,
 			sent: Date.now(),
 			timeout: timeout,
-			callback: callback
+			callback: callback,
+			resolve: resolve,
+			reject: reject
 		});
 		parent.postMessage(this.request(method, params, this.id), this._origin);
 		this.nextID();
+		return promise;
 	}
 
 	/**
@@ -225,6 +262,8 @@ export default class PostRPCClient {
 		// 	'event source' + event.source,
 		// 	'this origin' + this._origin
 		// ]);
+		var result;
+		var error;
 
         if (event.origin === this._origin) {
 			var response = event.data;
@@ -238,9 +277,23 @@ export default class PostRPCClient {
 
 					// Match to queue
 					if (response.id === call.id) {
-						messages.push('called, call callback');
-						call.callback(response);
-						this._queue.splice(i, 1);
+						result = response.hasOwnProperty('result') ? response.result : null;
+						error = response.hasOwnProperty('error') ? response.error : null;
+						if (call.callback !== null) {
+							messages.push('called, call callback');
+							call.callback(result, error);
+							this._queue.splice(i, 1);
+						} else if (call.resolve !== null || call.reject !== null) {
+							messages.push('called, resolve/reject promise');
+							if (error) {
+								call.reject(error);
+							} else if (result) {
+								call.resolve(result);
+							} else {
+								call.reject(this.internalErrorResponse()['error']);
+							}
+							this._queue.splice(i, 1);
+						}
 					}
 				}
 
@@ -250,7 +303,9 @@ export default class PostRPCClient {
 				if (response.event in this._subscribed) {
 					messages.push('subscribed, call callback');
 					var subscribe = this._subscribed[response.event];
-					subscribe.callback(response);
+					result = response.hasOwnProperty('result') ? response.result : null;
+					error = response.hasOwnProperty('error') ? response.error : null;
+					subscribe.callback(result, error);
 				}
 
 			}

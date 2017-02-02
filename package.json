@@ -9,6 +9,9 @@
     "test": "mocha --compilers js:babel-core/register --colors ./test/*.spec.js",
     "test:watch": "mocha --compilers js:babel-core/register --colors -w ./test/*.spec.js"
   },
+  "dependencies": {
+    "native-promise-only": ""
+  },
   "devDependencies": {
     "babel": "^6.5.2",
     "babel-core": "^6.22.1",

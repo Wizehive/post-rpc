@@ -11,12 +11,13 @@
       // PostRPC Plugin iFrame
       //
 
-		var display = function (request, response) {
-			console.log('Plugin: request: ', request, 'response: ', response);
+		var display = function (request, result, error) {
+			console.log('Plugin: request: ', request, 'result: ', result, 'error: ', error);
 			var content = document.getElementById('content');
 			var output = '';
 			output = output + '<div>Request: '+JSON.stringify(request)+'</div><br>';
-			output = output + '<div>Response: '+JSON.stringify(response)+'</div><br>';
+			output = output + '<div>Result: '+JSON.stringify(result)+'</div><br>';
+			output = output + '<div>Error: '+JSON.stringify(error)+'</div><br>';
 			content.innerHTML = content.innerHTML+'<div>'+output+'</div><br>';
 		}
 
@@ -28,33 +29,37 @@
 			client.logging(true);
 			client.start();
 
-			client.subscribe('changed', function(response) {
-				display(null, response);
+			client.subscribe('changed', function(result, error) {
+				display(null, result, error);
 			});
 
-			client.call(null, null, function(response) {
-				display(client.request(null, null, 1), response);
+			client.call(null, null, function(result, error) {
+				display(client.request(null, null, 1), result, error);
 			});
 
-			client.call('subtract', {a: 11}, function(response) {
-				display(client.request('subtract', {a: 11}, 2), response);
+			client.call('subtract', {a: 11}, function(result, error) {
+				display(client.request('subtract', {a: 11}, 2), result, error);
 			});
 
-			client.call('subtract', {a: 11, b: -8}, function(response) {
-				display(client.request('subtract', {a: 11, b: -8}, 3), response);
+			client.call('subtract', {a: 11, b: -8}, function(result, error) {
+				display(client.request('subtract', {a: 11, b: -8}, 3), result, error);
 			});
 
-			client.call('divide', {a: 2, b: 0}, function(response) {
-				display(client.request('divide', {a: 2, b: 0}, 4), response);
+			client.call('divide', {a: 2, b: 0}, function(result, error) {
+				display(client.request('divide', {a: 2, b: 0}, 4), result, error);
 			});
 
-			client.call('digits', {num: 1, n: 500}, function(response) {
-				display(client.request('digits', {num: 1, n: 500}, 5), response);
+			client.call('digits', {num: 1, n: 500}, function(result, error) {
+				display(client.request('digits', {num: 1, n: 500}, 5), result, error);
 			});
 
-			client.call('add', {a: 2, b: 2}, function(response) {
-				display(client.request('add', {a: 2, b: 2}, 6), response);
-			});
+			client.call('add', {a: 2, b: 2})
+			.then(function(result) {
+				display(client.request('add', {a: 2, b: 2}, 6), result, null);
+		    })
+			.catch(function(error) {
+				display(client.request('add', {a: 2, b: 2}, 6), null, error);
+		    });
 
 		});
 
