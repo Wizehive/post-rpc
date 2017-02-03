@@ -1,0 +1,6 @@
+*.sublime-project
+*.sublime-workspace
+node_modules/
+lib/
+example/post-rpc/app/js/
+example/post-rpc/plugin/js/
