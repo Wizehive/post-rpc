@@ -31,23 +31,23 @@ const jsonrpc = '2.0';
 
 const parseErrorCode = -32700,
 	  parseErrorMessage = 'Parse error',
-	  parseErrorData = 'Invalid JSON was received by the server.';
+	  parseErrorData = 'Invalid JSON was received by the server';
 
 const invalidRequestCode = -32600,
 	  invalidRequestMessage = 'Invalid request',
-	  invalidRequestData = 'The JSON sent is not a valid request object.';
+	  invalidRequestData = 'The JSON sent is not a valid request object';
 
 const methodNotFoundCode = -32601,
 	  methodNotFoundMessage = 'Method not found',
-	  methodNotFoundData = 'The method does not exist / is not available.';
+	  methodNotFoundData = 'The method does not exist / is not available';
 
 const invalidParamsCode = -32602,
 	  invalidParamsMessage = 'Invalid params',
-	  invalidParamsData = 'Invalid method parameter(s).';
+	  invalidParamsData = 'Invalid method parameter(s)';
 
 const internalErrorCode = -32603,
 	  internalErrorMessage = 'Internal error',
-	  internalErrorData = 'Internal JSON-RPC error.';
+	  internalErrorData = 'Internal JSON-RPC error';
 
 const errorCode = -32000;
 
@@ -59,10 +59,20 @@ export default class PostRPCServer {
 	 * @return {PostRPCServer} instance
 	 */
 	constructor(origin) {
+		this.init(origin);
+	}
+
+	/**
+	 * Initialize/Reinitial
+	 * @param {String} origin
+	 * @return {Undefined}
+	 */
+	init(origin) {
 		this._name = 'PostRPC.Server';
 		this._origin = origin;
 		this._registered = {};
 		this._logging = false;
+		window.removeEventListener('message', (event) => this.messageHandler(event));
 	}
 
 	/**
@@ -95,7 +105,7 @@ export default class PostRPCServer {
 	 * @param {Object|Array[string]} param signature of method
 	 * @param {Type} ret signature of return
 	 * @param {Function} func function to perform call
-	 * @return {Undefined}
+	 * @return {Boolean}
 	*/
 	register(method, params, ret, func, desc) {
 		this.log([
@@ -113,15 +123,21 @@ export default class PostRPCServer {
 			function: func,
 			description: desc
 		};
+		return true;
 	}
 
 	/**
 	 * Unregister RPC method
 	 * @param {String} method
-	 * @return {Undefined}
+	 * @return {Boolean}
 	*/
 	unregister(method) {
-		delete this._registered[method];
+		if (this._registered.hasOwnProperty(method)) {
+			delete this._registered[method];
+			return true;
+		}
+		return false;
+
 	}
 
 	/**

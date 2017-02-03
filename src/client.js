@@ -38,15 +38,29 @@ const jsonrpc = '2.0';
 
 const timeoutCode = -32001,
 	  timeoutMessage = 'Timeout',
-	  timeoutData = 'The server didn\'t respond to request within timeframe allowed.';
+	  timeoutData = 'The server didn\'t respond to request within timeframe allowed';
 
 const internalErrorCode = -32603,
 	  internalErrorMessage = 'Internal error',
-	  internalErrorData = 'Internal JSON-RPC error.';
+	  internalErrorData = 'Internal JSON-RPC error';
 
 export default class PostRPCClient {
 
+	/**
+	 * Constructor
+	 * @param {String} origin  origin uri expected from client
+	 * @return {PostRPCClient} instance
+	 */
 	constructor(origin) {
+		this.init(origin);
+	}
+
+	/**
+	 * Initialize/Reinitial
+	 * @param {String} origin
+	 * @return {Undefined}
+	 */
+	init(origin) {
 		this._name = 'PostRPC.Client';
 		this._origin = origin;
 		this._id = 1;
@@ -54,6 +68,7 @@ export default class PostRPCClient {
 		this._subscribed = {};
 		this._logging = false;
 		setInterval(() => this.timeoutHandler(), 250);
+		window.removeEventListener('message', (event) => this.messageHandler(event));
 	}
 
 	/**
