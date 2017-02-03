@@ -1,0 +1,64 @@
+{
+  "name": "post-rpc",
+  "version": "0.5.0",
+  "description": "PostRPC - JSON RPC over PostMessage",
+  "scripts": {
+    "build": "webpack --mode=build",
+    "deploy": "cp lib/PostRPC* example/post-rpc/app/js && cp lib/PostRPC* example/post-rpc/plugin/js",
+    "dev": "webpack-dev-server --content-base example/ --host localhost --port 5001 --colors --watch",
+    "testing": "webpack-dev-server --host localhost --port 5001 --colors --watch",
+    "test": "mocha --compilers js:babel-core/register --colors ./test/*.spec.js",
+    "test:watch": "mocha --compilers js:babel-core/register --colors -w ./test/*.spec.js"
+  },
+  "dependencies": {
+    "native-promise-only": ""
+  },
+  "devDependencies": {
+    "babel": "^6.5.2",
+    "babel-core": "^6.22.1",
+    "babel-cli":"^6.22.2",
+    "babel-eslint": "^7.1.1",
+    "babel-loader": "^6.2.10",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-preset-es2015": "^6.22.0",
+    "blanket": "^1.2.3",
+    "chai": "^3.4.1",
+    "eslint": "^3.14.1",
+    "eslint-loader": "^1.6.1",
+    "grunt": "^0.4.5",
+    "grunt-blanket-mocha": "^0.5.0",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-karma": "^0.12.1",
+    "karma": "^0.13.15",
+    "karma-chrome-launcher": "^0.2.2",
+    "karma-coverage": "^0.5.3",
+    "karma-firefox-launcher": "^0.1.7",
+    "karma-html2js-preprocessor": "^0.1.0",
+    "karma-mocha": "^0.2.1",
+    "karma-phantomjs-launcher": "^0.2.1",
+    "load-grunt-tasks": "^3.4.0",
+    "mocha": "^3.2.0",
+    "sinon": "^1.17.2",
+    "sinon-chai": "^2.8.0",
+    "webpack": "^1.14.0",
+    "webpack-dev-server": "^1.16.3",
+    "yargs": "^4.8.1"
+
+
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wizehive/post-rpc.git"
+  },
+  "keywords": [
+  	"call",
+    "json",
+    "rpc",
+    "postmessage",
+    "iframe"
+  ],
+  "author": "David McNelis",
+  "license": "MIT",
+  "homepage": "https://github.com/wizehive/post-rpc"
+}
