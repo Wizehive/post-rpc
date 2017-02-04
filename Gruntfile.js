@@ -47,8 +47,8 @@ module.exports = function(grunt) {
 
                     // html2js preprocessor takes this file and coverts it
                     // to a string in our JS when the tests run.
-                    'test/server.html',
-                    'test/client.html'
+                    //'test/server.html',
+                    'test/index.html'
                 ]
             },
 

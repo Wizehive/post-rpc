@@ -72,6 +72,17 @@ export default class PostRPCClient {
 	}
 
 	/**
+	 * Wrap postMessage for testablity (can spy on it)
+	 * @param {Window} target
+	 * @param {Object} message
+	 * @param {String} dom
+	 * @return {Undefined}
+	*/
+	postMessage(target, message, dom) {
+		return target.postMessage(message, dom);
+	}
+
+	/**
 	 * Get client class name
 	 * @return {string} class name
 	 */
@@ -110,8 +121,7 @@ export default class PostRPCClient {
 	 * @return {Undefined}
 	*/
 	subscribe(event, callback) {
-		this.log([
-			'subscribe',
+		this.logGroup('subscribe', [
 			'event: ' + event,
 			'callback: function() {}'
 		]);
@@ -236,7 +246,7 @@ export default class PostRPCClient {
 			resolve: resolve,
 			reject: reject
 		});
-		parent.postMessage(this.request(method, params, this.id), this._origin);
+		this.postMessage(parent, this.request(method, params, this.id), this._origin);
 		this.nextID();
 		return promise;
 	}
@@ -344,12 +354,36 @@ export default class PostRPCClient {
 	 * @param {String} color
 	 * @return {Undefined}
 	*/
-	log(messages, color = 'green') {
+	log(messages, collapse = false, color = 'green') {
 		if (this._logging) {
-			console.group(this._name);
+			if (collapse) {
+				console.groupCollapsed(this._name);
+			} else {
+				console.group(this._name);
+			}
+
 			for (var i = 0; i < messages.length; i++) {
 				console.log('%c%s', 'color:' + color, messages[i]);
 			}
+			console.groupEnd();
+		}
+	}
+
+	/**
+	 * Log group messages to console
+	 * @param {Array[String]} messages
+	 * @param {String} color
+	 * @return {Undefined}
+	*/
+	logGroup(group, messages, color = 'green') {
+		if (this._logging) {
+			console.group(this._name);
+			console.groupCollapsed(group);
+
+			for (var i = 0; i < messages.length; i++) {
+				console.log('%c%s', 'color:' + color, messages[i]);
+			}
+			console.groupEnd();
 			console.groupEnd();
 		}
 	}

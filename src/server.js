@@ -49,7 +49,22 @@ const internalErrorCode = -32603,
 	  internalErrorMessage = 'Internal error',
 	  internalErrorData = 'Internal JSON-RPC error';
 
+const invalidReturnCode = -32604,
+	  invalidReturnMessage = 'Invalid return',
+	  invalidReturnData = 'Invalid method return type';
+
 const errorCode = -32000;
+
+const allowable = [
+	'boolean',
+	'null',
+	'undefined',
+	'number',
+	'string',
+	'symbol',
+	'object',
+	'array'
+];
 
 export default class PostRPCServer {
 
@@ -73,6 +88,17 @@ export default class PostRPCServer {
 		this._registered = {};
 		this._logging = false;
 		window.removeEventListener('message', (event) => this.messageHandler(event));
+	}
+
+	/**
+	 * Wrap postMessage for testablity (can spy on it)
+	 * @param {Window} target
+	 * @param {Object} message
+	 * @param {String} dom
+	 * @return {Undefined}
+	*/
+	post(target, message, dom) {
+		target.postMessage(message, dom);
 	}
 
 	/**
@@ -108,8 +134,7 @@ export default class PostRPCServer {
 	 * @return {Boolean}
 	*/
 	register(method, params, ret, func, desc) {
-		this.log([
-			'register',
+		this.logGroup('register', [
 			'method: ' + method,
 			'params: ' + JSON.stringify(params),
 			'return: ' + JSON.stringify(ret),
@@ -250,6 +275,22 @@ export default class PostRPCServer {
 	}
 
 	/**
+	 * JSON-RPC v2 invalid return response
+	 * @return {Object} response
+	*/
+	invalidReturnResponse(request) {
+		return {
+			jsonrpc: jsonrpc,
+			error: {
+				code: invalidReturnCode,
+				message: invalidReturnMessage,
+				data: invalidReturnData
+			},
+			id: request.id
+		};
+	}
+
+	/**
 	 * JSON-RPC v2 success response
 	 * @return {Object} response
 	*/
@@ -265,17 +306,27 @@ export default class PostRPCServer {
 	 * JSON-RPC v2 failure response
 	 * @return {Object} response
 	*/
-	failure(code, message, data, id) {
+	failure(error, id) {
+		if (error.hasOwnProperty('name') && error.hasOwnProperty('message')) {
+			return {
+				jsonrpc: jsonrpc,
+				error: {
+					code: errorCode,
+					message: error.name,
+					data: error.message
+				},
+				id: id
+			};
+		}
 		return {
 			jsonrpc: jsonrpc,
 			error: {
-				code: code,
-				message: message,
-				data: data
+				code: errorCode,
+				message: 'Error',
+				data: JSON.stringify(error)
 			},
 			id: id
 		};
-
 	}
 
 	/**
@@ -303,7 +354,7 @@ export default class PostRPCServer {
 		for (var i = 0; i < window.frames.length; i++) {
 			var frame = window.frames[i];
 
-			frame.postMessage(this.event(result, name), '*');
+			this.post(frame, this.event(result, name), '*');
 		}
 		messages.push('(' + window.frames.length + ') post publish');
 		this.log(messages);
@@ -368,12 +419,12 @@ export default class PostRPCServer {
 			if (!this.isValid(request)) {
 
 				messages.push('post invalid');
-				event.source.postMessage(this.invalidRequestResponse(request), '*');
+				this.post(event.source, this.invalidRequestResponse(request), '*');
 
 			} else if (!this.isMethodFound(request)) {
 
 				messages.push('post method not found');
-				event.source.postMessage(this.methodNotFoundResponse(request), '*');
+				this.post(event.source, this.methodNotFoundResponse(request), '*');
 
 			} else {
 
@@ -382,18 +433,46 @@ export default class PostRPCServer {
 				var args = this.mapParams(request.params, rpc.params);
 				if (args.length !== rpc.params.length) {
 					messages.push('post invalid params');
-					event.source.postMessage(this.invalidParamsResponse(request), '*');
+					this.post(event.source, this.invalidParamsResponse(request), '*');
 				} else {
 					messages.push('call: ' + request.method + '(' + args.join(', ') + ')');
 					try {
 						var result = func(...args);
-						messages.push('return: ' + JSON.stringify(result));
-						messages.push('post success');
-						event.source.postMessage(this.success(result, request.id), '*');
-					} catch(err) {
-						messages.push('error: name: ' + err.name + ', message: ' + err.message);
-						messages.push('post failure');
-						event.source.postMessage(this.failure(errorCode, err.name, err.message, request.id), '*');
+
+						if (typeof result === 'object' && typeof result.then === 'function') {
+							messages.push('func result is a promise');
+							var self = this;
+							result
+							.then(function (res) {
+								self.log([
+									'return: ' + JSON.stringify(res),
+									'post promise success'
+								]);
+								self.post(event.source, self.success(res, request.id), '*');
+							})
+							.catch(function (err) {
+								self.log([
+									'return: ' + JSON.stringify(err),
+									'post promise promise failure'
+								]);
+								self.post(event.source, self.failure(err, request.id), '*');
+						    });
+
+						} else if (allowable.indexOf(typeof result)) {
+							messages.push('func result is allowable type');
+							messages.push('return: ' + JSON.stringify(result));
+							messages.push('post allowable success');
+							this.post(event.source, this.success(result, request.id), '*');
+						} else {
+							messages.push('func result is NOT allowable type');
+							messages.push('type: ' + typeof result);
+							messages.push('post invalid return');
+							this.post(event.source, this.invalidReturnResponse(request), '*');
+						}
+					} catch(error) {
+						messages.push('error: ' + JSON.stringify(error));
+						messages.push('post try failure');
+						this.post(event.source, this.failure(error, request.id), '*');
 					}
 				}
 
@@ -422,9 +501,29 @@ export default class PostRPCServer {
 	log(messages, color = 'blue') {
 		if (this._logging) {
 			console.group(this._name);
+
 			for (var i = 0; i < messages.length; i++) {
 				console.log('%c%s', 'color:' + color, messages[i]);
 			}
+			console.groupEnd();
+		}
+	}
+
+	/**
+	 * Log group messages to console
+	 * @param {Array[String]} messages
+	 * @param {String} color
+	 * @return {Undefined}
+	*/
+	logGroup(group, messages, color = 'blue') {
+		if (this._logging) {
+			console.group(this._name);
+			console.groupCollapsed(group);
+
+			for (var i = 0; i < messages.length; i++) {
+				console.log('%c%s', 'color:' + color, messages[i]);
+			}
+			console.groupEnd();
 			console.groupEnd();
 		}
 	}

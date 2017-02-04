@@ -4,7 +4,7 @@
   </head>
   <body style="background: #f3f3f3;">
     <iframe width="100%" height="3000px" src="/post-rpc/plugin/" style="border: none;" sandbox="allow-scripts"></iframe>
-	<script type="text/javascript" src="js/PostRPC.Server.min.js"></script>
+	<script type="text/javascript" src="../../PostRPC.Server.js"></script>
     <script type="text/javascript">
 
 
@@ -32,11 +32,15 @@
 		};
 
 		var getForms = function (workspaceID) {
-			return [
-				{id: 70001, field1: 'A', field2: 1},
-				{id: 70002, field1: 'B', field2: 2},
-				{id: 70003, field1: 'C', field2: 2}
-			];
+			var promise = new Promise(function(resolve, reject) {
+				resolve([
+					{id: 70001, field1: 'A', field2: 1},
+					{id: 70002, field1: 'B', field2: 2},
+					{id: 70003, field1: 'C', field2: 2}
+				]);
+			});
+			console.log('promise type:', typeof promise);
+			return promise;
 		};
 
 		var getRecords = function (formID) {

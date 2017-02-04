@@ -23,10 +23,12 @@
 		<!-- We will using BDD-style assertions. See Mocha documentation for more info -->
 		<script>mocha.setup('bdd');</script>
 		<!-- The source file we will be testing! Don't forget the data-cover attribute so Blanket will know which file will need to be instrumented for coverage. -->
-		<script src="../lib/PostRPC.Server.js" data-cover></script>
+		<script src="../PostRPC.Server.js" data-cover></script>
+		<script src="../PostRPC.Client.js" data-cover></script>
 		<!-- Our test suite needs to be after the source file, of course -->
 		<script src="polyfills.js"></script>
 		<script src="server.spec.js"></script>
+		<script src="client.spec.js"></script>
 		<script>
 		// For Blanket add coverage in our Mocha CLI tests (node environment),
 		// we need to add this reporter

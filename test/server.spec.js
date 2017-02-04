@@ -1,28 +1,36 @@
 var expect = chai.expect;
+
 var origin = 'http://localhost:5001';
 var server = new PostRPC.Server(origin);
 
 describe('PostRPC.Server', function() {
 
-	describe('name', function() {
-		server.init(origin);
+	before(function() {
+		// Create a stub child iframe to recieve postMessage
+		var iframe = window.document.createElement('iframe');
+        iframe.setAttribute('src', 'about:blank');
+		iframe.setAttribute('id', 'client');
+		iframe.setAttribute('style', 'position: fixed; top: 0; left: -99999px;');
+        window.document.body.appendChild(iframe);
+    });
 
+	beforeEach(function() {
+		server.init(origin);
+	});
+
+	describe('name', function() {
 		it('should return the name', function() {
 			expect(server.name).to.be.equal('PostRPC.Server');
 		});
 	});
 
 	describe('origin', function() {
-		server.init(origin);
-
 		it('should return the origin', function() {
 			expect(server.origin).to.be.equal('http://localhost:5001');
 		});
 	});
 
 	describe('register', function() {
-		server.init(origin);
-
 		var f = function(a,b) {};
 		it('should register the function', function() {
 			expect(server.register(
@@ -31,7 +39,7 @@ describe('PostRPC.Server', function() {
 				'Number',
 				f,
 				'F(a,b)'
-			)).to.be.equal(true);
+			)).to.be.true;
 
 			expect(server.registered.f).to.deep.equal({
 				params: {a: 'Number', b: 'Number'},
@@ -43,8 +51,6 @@ describe('PostRPC.Server', function() {
 	});
 
 	describe('unregister', function() {
-		server.init(origin);
-
 		var f = function(a,b) {};
 		it('should unregister the function', function() {
 			server.register(
@@ -54,32 +60,28 @@ describe('PostRPC.Server', function() {
 				f,
 				'F(a,b)'
 			);
-			expect(server.unregister('f')).to.be.equal(true);
+			expect(server.unregister('f')).to.be.true;
 
 			expect(server.registered.hasOwnProperty('f')).to.equal(false);
 		});
 	});
 
 	describe('isValid', function() {
-		server.init(origin);
-
     	it('should be valid', function() {
-			expect(server.isValid({jsonrpc: '2.0', method: 'add', params: {a: 2, b: 2}})).to.be.equal(true);
+			expect(server.isValid({jsonrpc: '2.0', method: 'add', params: {a: 2, b: 2}})).to.be.true;
     	});
 
     	it('should not be valid', function() {
-			expect(server.isValid({jsonrpc: '2.0', params: {a: 2, b: 2}})).to.be.equal(false);
+			expect(server.isValid({jsonrpc: '2.0', params: {a: 2, b: 2}})).to.not.be.true;
 
-			expect(server.isValid({jsonrpc: '2.0', method: 'rpc.add', params: {a: 2, b: 2}})).to.be.equal(false);
+			expect(server.isValid({jsonrpc: '2.0', method: 'rpc.add', params: {a: 2, b: 2}})).to.not.be.true;
 
-			expect(server.isValid({method: 'add', params: {a: 2, b: 2}})).to.be.equal(false);
+			expect(server.isValid({method: 'add', params: {a: 2, b: 2}})).to.not.be.true;
     	});
 	});
 
 
 	describe('isMethodFound', function() {
-		server.init(origin);
-
 		var f = function(a,b) {};
 		var request = {jsonrpc: '2.0', method: 'f', params: {a: 2, b: 2}};
 		it('should find method', function() {
@@ -91,19 +93,17 @@ describe('PostRPC.Server', function() {
 				'F(a,b)'
 			);
 
-			expect(server.isMethodFound(request)).to.be.equal(true);
+			expect(server.isMethodFound(request)).to.be.true;
 		});
 
 		it('should not find method', function() {
 			server.init();
 
-			expect(server.isMethodFound(request)).to.be.equal(false);
+			expect(server.isMethodFound(request)).to.not.be.true;
 		});
 	});
 
 	describe('parseErrorResponse', function() {
-		server.init(origin);
-
 		it('should be correct response', function() {
 
 			expect(server.parseErrorResponse()).to.deep.equal({
@@ -120,8 +120,6 @@ describe('PostRPC.Server', function() {
 	});
 
 	describe('invalidRequestResponse', function() {
-		server.init(origin);
-
 		it('should be correct response', function() {
 
 			expect(server.invalidRequestResponse({id: 11})).to.deep.equal({
@@ -138,8 +136,6 @@ describe('PostRPC.Server', function() {
 	});
 
 	describe('methodNotFoundResponse', function() {
-		server.init(origin);
-
 		it('should be correct response', function() {
 
 			expect(server.methodNotFoundResponse({id: 11})).to.deep.equal({
@@ -156,8 +152,6 @@ describe('PostRPC.Server', function() {
 	});
 
 	describe('invalidParamsResponse', function() {
-		server.init(origin);
-
 		it('should be correct response', function() {
 
 			expect(server.invalidParamsResponse({id: 11})).to.deep.equal({
@@ -174,8 +168,6 @@ describe('PostRPC.Server', function() {
 	});
 
 	describe('internalErrorResponse', function() {
-		server.init(origin);
-
 		it('should be correct response', function() {
 
 			expect(server.internalErrorResponse({id: 11})).to.deep.equal({
@@ -192,8 +184,6 @@ describe('PostRPC.Server', function() {
 	});
 
 	describe('success', function() {
-		server.init(origin);
-
 		it('should be correct response', function() {
 			expect(server.success(2, 11)).to.deep.equal({
 				jsonrpc: '2.0',
@@ -205,10 +195,8 @@ describe('PostRPC.Server', function() {
 	});
 
 	describe('failure', function() {
-		server.init(origin);
-
 		it('should be correct response', function() {
-			expect(server.failure(-32000, 'Failed', 'Something went wrong', 11)).to.deep.equal({
+			expect(server.failure({name: 'Failed', message: 'Something went wrong'}, 11)).to.deep.equal({
 				jsonrpc: '2.0',
 				error: {
 					code: -32000,
@@ -222,8 +210,6 @@ describe('PostRPC.Server', function() {
 	});
 
 	describe('event', function() {
-		server.init(origin);
-
 		it('should be correct response', function() {
 			expect(server.event({state: 'done'}, 'changed')).to.deep.equal({
 				jsonrpc: '2.0',
@@ -240,32 +226,22 @@ describe('PostRPC.Server', function() {
 
 	describe('publish', function(){
 
-		var messageSpy;
-
 		beforeEach(function() {
-			server.init(origin);
-
-			messageSpy = sinon.spy();
-
-    		window.addEventListener('message', messageSpy);
+	        sinon.stub(server, "post");
 		});
 
 		it('should fire a message event with correct data', function(){
 			server.publish('changed', {state: 'done'});
 
-			expect(messageSpy.callCount).to.equal(1);
-
-			var spyCall = messageSpy.getCall(0);
-			expect(spyCall.args[1].result).to.deep.equal({state: 'done'});
-			expect(spyCall.args[1].name).to.equal('changed');
+        	expect(server.post.callCount).to.be.equal(1);
+        	expect(server.post.getCall(0).args[1].event).to.equal('changed');
+        	expect(server.post.getCall(0).args[1].result).to.deep.equal({state: 'done'});
 		});
 
-		afterEach(function(){
-    		window.removeEventListener('message', messageSpy);
+		afterEach(function() {
+	       server.post.restore();
 		});
 	});
-
-
 
 	// start()
 	describe('start', function() {

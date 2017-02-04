@@ -1,7 +1,18 @@
 var expect = chai.expect;
-var client = new PostRPC.Client('http://localhost:5001');
+
+// var clientWindow = findClientWindow();
+// var client = (clientWindow ? clientWindow.client : undefined) //|| new PostRPC.Client(origin);
+// var client; = new PostRPC.Client(origin);
+// console.log('client', client);
 
 describe('PostRPC.Client', function() {
+
+	var origin = 'http://localhost:5001';
+	var client;
+
+	beforeEach(function() {
+		client = new PostRPC.Client(origin);
+	});
 
 	describe('name', function() {
 		it('should return the name', function() {
