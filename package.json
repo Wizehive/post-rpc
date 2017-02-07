@@ -3,11 +3,10 @@
   "version": "0.5.0",
   "description": "PostRPC - JSON RPC over PostMessage",
   "scripts": {
-    "build": "webpack --mode=build",
+    "build": "webpack && webpack --mode=build",
     "example": "webpack-dev-server --content-base example/ --host localhost --port 5001 --colors --watch",
-    "blanket": "webpack-dev-server --host localhost --port 5001 --colors --watch",
-    "test": "mocha --compilers js:babel-core/register --colors ./test/*.spec.js",
-    "test:watch": "mocha --compilers js:babel-core/register --colors -w ./test/*.spec.js"
+    "blanket": "webpack-dev-server --host localhost --port 6001 --colors --watch",
+    "test": "grunt karma"
   },
   "dependencies": {
     "native-promise-only": ""

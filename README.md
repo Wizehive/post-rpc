@@ -18,6 +18,8 @@ var server = new window.PostRPC.Server('http://localhost:5001');
 
 ```
 
+### Registering RPC's
+
 In order to respond to client RPC requests, the server must register each RCP method, describing it and binding it to a function:
 
 ```
@@ -49,15 +51,22 @@ Supported parameter and return types include:
 | Undefined     |
 | Number        |
 | String        |
-| Symbol        |
 | Object        |
 | Array         |
+
+If the return type is an object it may contain members that correspond to any of the other return types (except Promise). It may also contain nested members. It must not, however, contain any self-referential members as it would not be serializable.
+
+The registered function may if needed return a promise to PostRPC.Server when called. If so, it must resolve or reject to the actual result/error. The promise itself is not sent through postMessage transport as it and it's resolve/reject handlers are not serializable. The promise will be held by PostRPCServer until it resolves/rejects and the corresponding result/error will be forwarded through postMessage to PostRPC.Client.
+
+### Starting the Server
 
 After all RPC's are register, you must start the server, so that it begins handling postMessage events on the parent window:
 
 ```
 server.start();
 ```
+
+### Publishing Notifications
 
 Once the server has started, it wil process valid client requests for any registered RPC.
 
@@ -81,12 +90,15 @@ The clientlibrary needs to be loaded into each child iFrame window in order to m
 var client = new window.PostRPC.Client('http://localhost:5001');
 ```
 
+### Starting the Client
 
 After the client is instantiated, you must start the client, so that it begins handling postMessage events on the child iFrame window:
 
 ```
 client.start();
 ```
+
+### Calling RPC's
 
 Now the client may call registered RPC's on the server:
 
@@ -107,6 +119,10 @@ client.call('subtract', {a: 11, b: -8})
 	display('subtract 11 - -8', null, error);
 });
 ```
+
+The *call* function returns a promise when no callback funtion is passed. 
+
+### Subscribing to Notifications
 
 At any time while the client is running, it may optionally subscribe to notifications from the server running in the parent window:
 

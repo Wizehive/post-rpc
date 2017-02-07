@@ -1,18 +1,54 @@
 var expect = chai.expect;
 
-var origin = 'http://localhost:5001';
-var server = new PostRPC.Server(origin);
+var origin = 'http://localhost:6001';
+
+var serverWindow, serverDocument, server;
+
+var clientWindow, clientDocument, client;
+
+var jsonrpc = '2.0';
+
+var parseErrorCode = -32700,
+	parseErrorMessage = 'Parse error',
+	parseErrorData = 'Invalid JSON was received by the server';
+
+var invalidRequestCode = -32600,
+	invalidRequestMessage = 'Invalid request',
+	invalidRequestData = 'The JSON sent is not a valid request object';
+
+var methodNotFoundCode = -32601,
+	methodNotFoundMessage = 'Method not found',
+	methodNotFoundData = 'The method does not exist / is not available';
+
+var invalidParamsCode = -32602,
+	invalidParamsMessage = 'Invalid params',
+	invalidParamsData = 'Invalid method parameter(s)';
+
+var internalErrorCode = -32603,
+	internalErrorMessage = 'Internal error',
+	internalErrorData = 'Internal JSON-RPC error';
+
+var invalidReturnCode = -32604,
+	invalidReturnMessage = 'Invalid return',
+	invalidReturnData = 'Invalid method return type';
+
+var errorCode = -32000;
 
 describe('PostRPC.Server', function() {
 
 	before(function() {
-		// Create a stub child iframe to recieve postMessage
-		var iframe = window.document.createElement('iframe');
-        iframe.setAttribute('src', 'about:blank');
-		iframe.setAttribute('id', 'client');
-		iframe.setAttribute('style', 'position: fixed; top: 0; left: -99999px;');
-        window.document.body.appendChild(iframe);
-    });
+
+		setupServer(origin);
+		serverWindow = window;
+		serverDocument = window.document;
+		server = serverWindow.server;
+
+		var iframe = setupClient(origin);
+		clientWindow = iframe.contentWindow;
+		clientDocument = clientWindow.document;
+	  	client = clientWindow.client;
+
+	});
 
 	beforeEach(function() {
 		server.init(origin);
@@ -26,7 +62,7 @@ describe('PostRPC.Server', function() {
 
 	describe('origin', function() {
 		it('should return the origin', function() {
-			expect(server.origin).to.be.equal('http://localhost:5001');
+			expect(server.origin).to.be.equal('http://localhost:6001');
 		});
 	});
 
@@ -109,9 +145,9 @@ describe('PostRPC.Server', function() {
 			expect(server.parseErrorResponse()).to.deep.equal({
 				jsonrpc: '2.0',
 				error: {
-					code: -32700,
-					message: 'Parse error',
-					data: 'Invalid JSON was received by the server'
+					code: parseErrorCode,
+					message: parseErrorMessage,
+					data: parseErrorData
 				},
 				id: null
 			});
@@ -125,9 +161,9 @@ describe('PostRPC.Server', function() {
 			expect(server.invalidRequestResponse({id: 11})).to.deep.equal({
 				jsonrpc: '2.0',
 				error: {
-					code: -32600,
-					message: 'Invalid request',
-					data: 'The JSON sent is not a valid request object'
+					code: invalidRequestCode,
+					message: invalidRequestMessage,
+					data: invalidRequestData
 				},
 				id: 11
 			});
@@ -141,9 +177,9 @@ describe('PostRPC.Server', function() {
 			expect(server.methodNotFoundResponse({id: 11})).to.deep.equal({
 				jsonrpc: '2.0',
 				error: {
-					code: -32601,
-					message: 'Method not found',
-					data: 'The method does not exist / is not available'
+					code: methodNotFoundCode,
+					message: methodNotFoundMessage,
+					data: methodNotFoundData
 				},
 				id: 11
 			});
@@ -157,9 +193,9 @@ describe('PostRPC.Server', function() {
 			expect(server.invalidParamsResponse({id: 11})).to.deep.equal({
 				jsonrpc: '2.0',
 				error: {
-					code: -32602,
-					message: 'Invalid params',
-					data: 'Invalid method parameter(s)'
+					code: invalidParamsCode,
+					message: invalidParamsMessage,
+					data: invalidParamsData
 				},
 				id: 11
 			});
@@ -173,9 +209,25 @@ describe('PostRPC.Server', function() {
 			expect(server.internalErrorResponse({id: 11})).to.deep.equal({
 				jsonrpc: '2.0',
 				error: {
-					code: -32603,
-					message: 'Internal error',
-					data: 'Internal JSON-RPC error'
+					code: internalErrorCode,
+					message: internalErrorMessage,
+					data: internalErrorData
+				},
+				id: 11
+			});
+
+		});
+	});
+
+	describe('invalidReturnResponse', function() {
+		it('should be correct response', function() {
+
+			expect(server.invalidReturnResponse({id: 11})).to.deep.equal({
+				jsonrpc: '2.0',
+				error: {
+					code: invalidReturnCode,
+					message: invalidReturnMessage,
+					data: invalidReturnData
 				},
 				id: 11
 			});
@@ -196,12 +248,12 @@ describe('PostRPC.Server', function() {
 
 	describe('failure', function() {
 		it('should be correct response', function() {
-			expect(server.failure({name: 'Failed', message: 'Something went wrong'}, 11)).to.deep.equal({
+			expect(server.failure(new RangeError('toPrecision() argument must be between 1 and 21'), 11)).to.deep.equal({
 				jsonrpc: '2.0',
 				error: {
-					code: -32000,
-					message: 'Failed',
-					data: 'Something went wrong'
+					code: errorCode,
+					message: 'RangeError',
+					data: 'toPrecision() argument must be between 1 and 21'
 				},
 				id: 11
 			});
@@ -224,43 +276,317 @@ describe('PostRPC.Server', function() {
 	});
 
 
-	describe('publish', function(){
+	describe('publish', function() {
 
-		beforeEach(function() {
-	        sinon.stub(server, "post");
-		});
+		var postSpy;
 
-		it('should fire a message event with correct data', function(){
+	  	beforeEach(function() {
+			server.start();
+			client.start();
+    		postSpy = sinon.spy(server, 'post');
+	  	});
+
+		it('should publish notification', function() {
 			server.publish('changed', {state: 'done'});
 
-        	expect(server.post.callCount).to.be.equal(1);
-        	expect(server.post.getCall(0).args[1].event).to.equal('changed');
-        	expect(server.post.getCall(0).args[1].result).to.deep.equal({state: 'done'});
+         	expect(postSpy.callCount).to.be.equal(1);
+         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+         	expect(postSpy.getCall(0).args[1].event).to.equal('changed');
+         	expect(postSpy.getCall(0).args[1].result).to.deep.equal({state: 'done'});
+         	expect(postSpy.getCall(0).args[2]).to.equal('*');
 		});
 
 		afterEach(function() {
-	       server.post.restore();
+    		server.post.restore();
 		});
+
 	});
 
 	// start()
 	describe('start', function() {
-    	it('pending');
+
+		var addEventListenerSpy;
+
+	  	beforeEach(function() {
+    		addEventListenerSpy = sinon.spy(window, 'addEventListener');
+	  	});
+
+		it('should add event listener on message for window', function() {
+			server.start();
+
+		    expect(addEventListenerSpy.callCount).equal(1);
+		    expect(addEventListenerSpy.args[0][0]).equal('message');
+		});
+
+		afterEach(function() {
+    		window.addEventListener.restore();
+		});
 	});
 
 	// stop()
 	describe('stop', function() {
-    	it('pending');
+
+		var removeEventListenerSpy;
+
+	  	beforeEach(function() {
+ 			server.start();
+   			removeEventListenerSpy = sinon.spy(window, 'removeEventListener');
+	  	});
+
+		it('should remove event listener on message for window', function() {
+			server.stop();
+
+		    expect(removeEventListenerSpy.callCount).equal(1);
+		    expect(removeEventListenerSpy.args[0][0]).equal('message');
+		});
+
+		afterEach(function() {
+    		window.removeEventListener.restore();
+		});
 	});
 
 	// mapParams(given, required)
 	describe('mapParams', function() {
-    	it('pending');
+
+		it('should map parameter from object', function() {
+			var required = [['a', 'Number'], ['b', 'String']];
+			var extra = {a: 3, b: 'test', c: true};
+			var matching = {a: 3, b: 'test'};
+			var missing = {b: 'test'};
+
+			expect(server.mapParams(extra, required)).to.deep.equal([3, 'test']);
+			expect(server.mapParams(matching, required)).to.deep.equal([3, 'test']);
+			expect(server.mapParams(missing, required)).to.deep.equal(['test']);
+		});
+
+		it('should map parameter from array', function() {
+			var required = [['a', 'Number'], ['b', 'String']];
+			var extra = [3, 'test', true];
+			var matching = [3, 'test'];
+			var missing = ['test'];
+
+			expect(server.mapParams(extra, required)).to.deep.equal([3, 'test']);
+			expect(server.mapParams(matching, required)).to.deep.equal([3, 'test']);
+			expect(server.mapParams(missing, required)).to.deep.equal(['test']);
+		});
+
 	});
 
 	// messageHandler(event)
 	describe('messageHandler', function() {
-    	it('pending');
+    	//it('pending');
+
+		var postSpy;
+
+		beforeEach(function() {
+			server.start();
+			client.start();
+			postSpy = sinon.spy(server, 'post');
+		});
+
+		it('should post invalid request', function() {
+			server.request({id: 11}, clientWindow);
+
+			expect(postSpy.callCount).to.be.equal(1);
+         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			expect(postSpy.getCall(0).args[1]).to.deep.equal({
+				jsonrpc: '2.0',
+				error: {
+					code: invalidRequestCode,
+					message: invalidRequestMessage,
+					data: invalidRequestData
+				},
+				id: 11
+			});
+         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+		});
+
+		it('should post method not found', function() {
+			server.request({jsonrpc: '2.0', method: 'notFound', params: {}, id: 11}, clientWindow);
+
+			expect(postSpy.callCount).to.be.equal(1);
+         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			expect(postSpy.getCall(0).args[1]).to.deep.equal({
+				jsonrpc: '2.0',
+				error: {
+					code: methodNotFoundCode,
+					message: methodNotFoundMessage,
+					data: methodNotFoundData
+				},
+				id: 11
+			});
+         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+		});
+
+		it('should post invalid params', function() {
+			var f = function(a,b) {};
+			server.register(
+				'f',
+				[['a', 'Number'], ['b', 'Number']],
+				'Number',
+				f,
+				'F(a,b)'
+			);
+			server.request({jsonrpc: '2.0', method: 'f', params: {a: 1}, id: 11}, clientWindow);
+
+			expect(postSpy.callCount).to.be.equal(1);
+         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			expect(postSpy.getCall(0).args[1]).to.deep.equal({
+				jsonrpc: '2.0',
+				error: {
+					code: invalidParamsCode,
+					message: invalidParamsMessage,
+					data: invalidParamsData
+				},
+				id: 11
+			});
+         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+		});
+
+		it('should post promise success', function() {
+    		it('pending');
+			// var f = function(a, b) {
+			// 	var promise = new Promise(function(resolve, reject) {
+			// 		resolve({c: 101, d: 202});
+			// 	});
+			// 	return promise;
+			// };
+			// server.register(
+			// 	'f',
+			// 	[['a', 'Number'], ['b', 'Number']],
+			// 	'Number',
+			// 	f,
+			// 	'F(a, b)'
+			// );
+			// server.request({jsonrpc: '2.0', method: 'f', params: {a: 1, b: 2}, id: 11}, clientWindow);
+
+			// expect(postSpy.callCount).to.be.equal(1);
+			// expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			// expect(JSON.stringify(postSpy.getCall(0).args[1])).to.deep.equal({
+			// 	jsonrpc: '2.0',
+			// 	result: {
+			// 		c: 101,
+			// 		d: 202
+			// 	},
+			// 	id: 11
+			// });
+   			// expect(postSpy.getCall(0).args[2]).to.equal('*');
+		});
+
+		it('should post promise failure', function() {
+    		it('pending');
+			// var f = function(a, b) {
+			// 	var promise = new Promise(function(resolve, reject) {
+			// 		reject({name: 'No Answer', d: 'The remote server did not answer'});
+			// 	});
+			// 	return promise;
+			// };
+			// server.register(
+			// 	'f',
+			// 	[['a', 'Number'], ['b', 'Number']],
+			// 	'Number',
+			// 	f,
+			// 	'F(a,b)'
+			// );
+			// server.request({jsonrpc: '2.0', method: 'f', id: 11, params: {a: 1, b: 2}}, clientWindow);
+
+			// expect(postSpy.callCount).to.be.equal(1);
+   			//  expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			// expect(JSON.stringify(postSpy.getCall(0).args[1])).to.deep.equal({
+			// 	jsonrpc: '2.0',
+			// 	error: {
+			// 		code: errorCode,
+			// 		message: 'No Answer',
+			// 		data: 'The remote server did not answer'
+			// 	},
+			// 	id: 11
+			// });
+   			//  expect(postSpy.getCall(0).args[2]).to.equal('*');
+		});
+
+		it('should post allowable success', function() {
+			var f = function(a, b) {
+				return {c: 101, d: 202};
+			};
+			server.register(
+				'f',
+				[['a', 'Number'], ['b', 'Number']],
+				'Number',
+				f,
+				'F(a, b)'
+			);
+			server.request({jsonrpc: '2.0', method: 'f', params: {a: 1, b: 2}, id: 11}, clientWindow);
+
+			expect(postSpy.callCount).to.be.equal(1);
+         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			expect(postSpy.getCall(0).args[1]).to.deep.equal({
+				jsonrpc: '2.0',
+				result: {
+					c: 101,
+					d: 202
+				},
+				id: 11
+			});
+         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+		});
+
+		it('should post invalid return', function() {
+			var f = function(a, b) {
+				var notallowed = function() {};
+				return notallowed;
+			};
+			server.register(
+				'f',
+				[['a', 'Number'], ['b', 'Number']],
+				'Date',
+				f,
+				'F(a, b)'
+			);
+			server.request({jsonrpc: '2.0', method: 'f', params: {a: 1, b: 2}, id: 11}, clientWindow);
+
+			expect(postSpy.callCount).to.be.equal(1);
+			expect(postSpy.getCall(0).args[1]).to.deep.equal({
+				jsonrpc: '2.0',
+				error: {
+					code: invalidReturnCode,
+					message: invalidReturnMessage,
+					data: invalidReturnData
+				},
+				id: 11
+			});
+         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+		});
+
+		it('should post try failure', function() {
+			var digits = function (num, n) {
+				return num.toPrecision(n);
+			};
+			server.register(
+				'digits',
+				[['num', 'Number'], ['n', 'Number']],
+				'Date',
+				digits,
+				'digits(num, n)'
+			);
+			server.request({jsonrpc: '2.0', method: 'digits', params: {num: 1, n: 500}, id: 11}, clientWindow);
+
+			expect(postSpy.callCount).to.be.equal(1);
+			expect(postSpy.getCall(0).args[1]).to.deep.equal({
+				jsonrpc: '2.0',
+				error: {
+					code: errorCode,
+					message: 'RangeError',
+					data: 'toPrecision() argument must be between 1 and 21'
+				},
+				id: 11
+			});
+         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+		});
+
+		afterEach(function() {
+			server.post.restore();
+		});
+
 	});
 
 	// logging(enabled)
@@ -270,6 +596,11 @@ describe('PostRPC.Server', function() {
 
 	// log(messages, color = 'blue')
 	describe('log', function() {
+    	it('pending');
+	});
+
+	// logGroup(messages, color = 'blue')
+	describe('logGroup', function() {
     	it('pending');
 	});
 

@@ -26,7 +26,7 @@
 			console.log("Plugin: DOM loaded and parsed");
 
 			var client = new window.PostRPC.Client('http://localhost:5001');
-			client.logging(true);
+			client.logging(false);
 			client.start();
 
 			client.subscribe('changed', function(result, error) {
@@ -53,20 +53,24 @@
 				display(client.request('digits', {num: 1, n: 500}, 5), result, error);
 			});
 
+			client.call('complex', {id: 101}, function(result, error) {
+				display(client.request('complex', {id: 101}, 6), result, error);
+			});
+
 			client.call('add', {a: 2, b: 2})
 			.then(function(result) {
-				display(client.request('add', {a: 2, b: 2}, 6), result, null);
+				display(client.request('add', {a: 2, b: 2}, 7), result, null);
 		    })
 			.catch(function(error) {
-				display(client.request('add', {a: 2, b: 2}, 6), null, error);
+				display(client.request('add', {a: 2, b: 2}, 8), null, error);
 		    });
 
 			client.call('getForms', {workspaceID: 11}, function(result, error) {
-				display(client.request('getForms', {workspaceID: 11}, 7), result, error);
+				display(client.request('getForms', {workspaceID: 11}, 9), result, error);
 			});
 
 			client.call('getRecords', {formID: 101}, function(result, error) {
-				display(client.request('getRecords', {formID: 101}, 7), result, error);
+				display(client.request('getRecords', {formID: 101}, 10), result, error);
 			});
 
 		});

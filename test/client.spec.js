@@ -1,17 +1,29 @@
 var expect = chai.expect;
 
-// var clientWindow = findClientWindow();
-// var client = (clientWindow ? clientWindow.client : undefined) //|| new PostRPC.Client(origin);
-// var client; = new PostRPC.Client(origin);
-// console.log('client', client);
+var origin = 'http://localhost:6001';
+
+var serverWindow, serverDocument, server;
+
+var clientWindow, clientDocument, client;
 
 describe('PostRPC.Client', function() {
 
-	var origin = 'http://localhost:5001';
-	var client;
+	before(function() {
+
+		setupServer(origin);
+		serverWindow = window;
+		serverDocument = window.document;
+		server = serverWindow.server;
+
+		var iframe = setupClient(origin);
+		clientWindow = iframe.contentWindow;
+		clientDocument = clientWindow.document;
+	  	client = clientWindow.client;
+
+	});
 
 	beforeEach(function() {
-		client = new PostRPC.Client(origin);
+		client.init(origin);
 	});
 
 	describe('name', function() {
@@ -22,7 +34,7 @@ describe('PostRPC.Client', function() {
 
 	describe('origin', function() {
 		it('should return the origin', function() {
-			expect(client.origin).to.be.equal('http://localhost:5001');
+			expect(client.origin).to.be.equal('http://localhost:6001');
 		});
 	});
 
@@ -53,12 +65,45 @@ describe('PostRPC.Client', function() {
 
 	// start()
 	describe('start', function() {
-    	it('pending');
+
+		var addEventListenerSpy;
+
+	  	beforeEach(function() {
+    		addEventListenerSpy = sinon.spy(window, 'addEventListener');
+	  	});
+
+		it('should add event listener on message for window', function() {
+			server.start();
+
+		    expect(addEventListenerSpy.callCount).equal(1);
+		    expect(addEventListenerSpy.args[0][0]).equal('message');
+		});
+
+		afterEach(function() {
+    		window.addEventListener.restore();
+		});
 	});
 
 	// stop()
 	describe('stop', function() {
-    	it('pending');
+
+		var removeEventListenerSpy;
+
+	  	beforeEach(function() {
+    		removeEventListenerSpy = sinon.spy(window, 'removeEventListener');
+	  	});
+
+		it('should remove event listener on message for window', function() {
+			server.start();
+			server.stop();
+
+		    expect(removeEventListenerSpy.callCount).equal(1);
+		    expect(removeEventListenerSpy.args[0][0]).equal('message');
+		});
+
+		afterEach(function() {
+    		window.removeEventListener.restore();
+		});
 	});
 
 	// request(method, params, id)
@@ -98,6 +143,11 @@ describe('PostRPC.Client', function() {
 
 	// log(messages, color = 'green')
 	describe('log', function() {
+    	it('pending');
+	});
+
+	// logGroup(messages, color = 'blue')
+	describe('logGroup', function() {
     	it('pending');
 	});
 

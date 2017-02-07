@@ -72,17 +72,6 @@ export default class PostRPCClient {
 	}
 
 	/**
-	 * Wrap postMessage for testablity (can spy on it)
-	 * @param {Window} target
-	 * @param {Object} message
-	 * @param {String} dom
-	 * @return {Undefined}
-	*/
-	postMessage(target, message, dom) {
-		return target.postMessage(message, dom);
-	}
-
-	/**
 	 * Get client class name
 	 * @return {string} class name
 	 */
@@ -246,7 +235,7 @@ export default class PostRPCClient {
 			resolve: resolve,
 			reject: reject
 		});
-		this.postMessage(parent, this.request(method, params, this.id), this._origin);
+		this.post(parent, this.request(method, params, this.id), this._origin);
 		this.nextID();
 		return promise;
 	}
@@ -276,65 +265,76 @@ export default class PostRPCClient {
 	}
 
 	/**
+	 * Wrap postMessage for testablity
+	 * @param {Window} targetWindow
+	 * @param {Object} message
+	 * @param {String} targetOrigin
+	 * @return {Undefined}
+	*/
+	post(targetWindow, message, targetOrigin) {
+		return targetWindow.postMessage(message, targetOrigin);
+	}
+
+	/**
+	 * Wrap response for testablity
+	 * @param {Object} response
+	 * @return {Undefined}
+	*/
+	response(response) {
+		var messages = ['response: ' + JSON.stringify(response)];
+		var result;
+		var error;
+
+		if (response && response.id) {	// Call
+			messages.push('call response');
+
+			for (var i = this._queue.length - 1; i >= 0; i--) {
+				var call = this._queue[i];
+
+				// Match to queue
+				if (response.id === call.id) {
+					result = response.hasOwnProperty('result') ? response.result : null;
+					error = response.hasOwnProperty('error') ? response.error : null;
+					if (call.callback !== null) {
+						messages.push('called, call callback');
+						call.callback(result, error);
+						this._queue.splice(i, 1);
+					} else if (call.resolve !== null || call.reject !== null) {
+						messages.push('called, resolve/reject promise');
+						if (error) {
+							call.reject(error);
+						} else if (result) {
+							call.resolve(result);
+						} else {
+							call.reject(this.internalErrorResponse()['error']);
+						}
+						this._queue.splice(i, 1);
+					}
+				}
+			}
+		} else if (response && response.event) {	// Event
+			messages.push('event response');
+
+			if (response.event in this._subscribed) {
+				messages.push('subscribed, call callback');
+				var subscribe = this._subscribed[response.event];
+				result = response.hasOwnProperty('result') ? response.result : null;
+				error = response.hasOwnProperty('error') ? response.error : null;
+				subscribe.callback(result, error);
+			}
+		}
+		this.log(messages);
+	}
+
+	/**
 	 * Handle postMessage events for child iFrame window
 	 * @param {Object} event
 	 * @return {Undefined}
 	*/
 	messageHandler(event) {
-		// this.log([
-		// 	'event origin' + event.origin,
-		// 	'event data' + event.data,
-		// 	'event source' + event.source,
-		// 	'this origin' + this._origin
-		// ]);
-		var result;
-		var error;
-
+		// console.log('client event', event);
         if (event.origin === this._origin) {
-			var response = event.data;
-			var messages = ['response: ' + JSON.stringify(response)];
-
-			if (response && response.id) {	// Call
-				messages.push('call response');
-
-				for (var i = this._queue.length - 1; i >= 0; i--) {
-					var call = this._queue[i];
-
-					// Match to queue
-					if (response.id === call.id) {
-						result = response.hasOwnProperty('result') ? response.result : null;
-						error = response.hasOwnProperty('error') ? response.error : null;
-						if (call.callback !== null) {
-							messages.push('called, call callback');
-							call.callback(result, error);
-							this._queue.splice(i, 1);
-						} else if (call.resolve !== null || call.reject !== null) {
-							messages.push('called, resolve/reject promise');
-							if (error) {
-								call.reject(error);
-							} else if (result) {
-								call.resolve(result);
-							} else {
-								call.reject(this.internalErrorResponse()['error']);
-							}
-							this._queue.splice(i, 1);
-						}
-					}
-				}
-
-			} else if (response && response.event) {	// Event
-				messages.push('event response');
-
-				if (response.event in this._subscribed) {
-					messages.push('subscribed, call callback');
-					var subscribe = this._subscribed[response.event];
-					result = response.hasOwnProperty('result') ? response.result : null;
-					error = response.hasOwnProperty('error') ? response.error : null;
-					subscribe.callback(result, error);
-				}
-
-			}
-			this.log(messages);
+ 			this.response(event.data);
         }
     }
 
@@ -344,6 +344,7 @@ export default class PostRPCClient {
 	 * @param {Function} callback function to notify
 	 * @return {Undefined}
 	*/
+ 	/* istanbul ignore next */
 	logging(enabled) {
 		this._logging = enabled;
 	}
@@ -354,6 +355,7 @@ export default class PostRPCClient {
 	 * @param {String} color
 	 * @return {Undefined}
 	*/
+ 	/* istanbul ignore next */
 	log(messages, collapse = false, color = 'green') {
 		if (this._logging) {
 			if (collapse) {
@@ -375,6 +377,7 @@ export default class PostRPCClient {
 	 * @param {String} color
 	 * @return {Undefined}
 	*/
+ 	/* istanbul ignore next */
 	logGroup(group, messages, color = 'green') {
 		if (this._logging) {
 			console.group(this._name);

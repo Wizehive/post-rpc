@@ -3,7 +3,7 @@
     <meta charset="UTF-8">
   </head>
   <body style="background: #f3f3f3;">
-    <iframe width="100%" height="3000px" src="/post-rpc/plugin/" style="border: none;" sandbox="allow-scripts"></iframe>
+    <iframe id="client" width="100%" height="3000px" src="/post-rpc/plugin/" style="border: none;" sandbox="allow-scripts"></iframe>
 	<script type="text/javascript" src="../../PostRPC.Server.js"></script>
     <script type="text/javascript">
 
@@ -31,6 +31,47 @@
 			return num.toPrecision(n);
 		};
 
+		var complex = function(id) {
+			return {
+				a: {
+					b: {
+						c: {
+							d: {
+								e: true,
+								f: null,
+								g: undefined,
+								h: 1.5,
+								i: 'i',
+								j: {
+									a: 1,
+									b:2
+								},
+								k: [
+									true,
+									null,
+									undefined,
+									1.5,
+									'i',
+									{
+										a: 1,
+										b:2
+									},
+									[
+										1,
+										2,
+										3
+									],
+									'b',
+									'c'
+								]
+							}
+						}
+					}
+
+				}
+			}
+		}
+
 		var getForms = function (workspaceID) {
 			var promise = new Promise(function(resolve, reject) {
 				resolve([
@@ -56,7 +97,7 @@
 			console.log("App: DOM loaded and parsed");
 
 			var server = new window.PostRPC.Server('http://localhost:5001');
-			server.logging(true);
+			server.logging(false);
 
 			server.register('add',[['a', 'Number'], ['b', 'Number']], 'Number', add, 'Calculate the sum of two numbers');
 
@@ -67,6 +108,8 @@
 			server.register('divide', [['a', 'Number'], ['b', 'Number']], 'Number', divide, 'Calculate the divsion of two numbers');
 
 			server.register('digits', [['num', 'Number'], ['n', 'Number']], 'Number', digits, 'Set the precicion for a number');
+
+			server.register('complex', [['id', 'Number']], 'Object', complex, 'Get complex stuff');
 
 			server.register('getForms', [['workspaceID', 'Number']], 'Array', getForms, 'Get a list of forms for a workspace');
 
