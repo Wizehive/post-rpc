@@ -26,7 +26,8 @@ var invalidParamsCode = -32602,
 
 var internalErrorCode = -32603,
 	internalErrorMessage = 'Internal error',
-	internalErrorData = 'Internal JSON-RPC error';
+	internalServerErrorData = 'Internal JSON-RPC server error',
+	internalClientErrorData = 'Internal JSON-RPC client error';
 
 var invalidReturnCode = -32604,
 	invalidReturnMessage = 'Invalid return',
@@ -34,24 +35,31 @@ var invalidReturnCode = -32604,
 
 var errorCode = -32000;
 
+setup(origin);
+
 describe('PostRPC.Server', function() {
 
 	before(function() {
+		server = findServer();
+		client = findClient();
+		serverWindow = findServerWindow();
+		clientWindow = findClientWindow();
 
-		setupServer(origin);
-		serverWindow = window;
-		serverDocument = window.document;
-		server = serverWindow.server;
+	  	if (server.window === client.window) {
+	  		throw new Error('server.window and client.window can\'t be same window');
+	  	}
 
-		var iframe = setupClient(origin);
-		clientWindow = iframe.contentWindow;
-		clientDocument = clientWindow.document;
-	  	client = clientWindow.client;
+	});
 
+	after(function() {
 	});
 
 	beforeEach(function() {
 		server.init(origin);
+		client.init(origin);
+	});
+
+	afterEach(function() {
 	});
 
 	describe('name', function() {
@@ -103,19 +111,18 @@ describe('PostRPC.Server', function() {
 	});
 
 	describe('isValid', function() {
-    	it('should be valid', function() {
+		it('should be valid', function() {
 			expect(server.isValid({jsonrpc: '2.0', method: 'add', params: {a: 2, b: 2}})).to.be.true;
-    	});
+		});
 
-    	it('should not be valid', function() {
+		it('should not be valid', function() {
 			expect(server.isValid({jsonrpc: '2.0', params: {a: 2, b: 2}})).to.not.be.true;
 
 			expect(server.isValid({jsonrpc: '2.0', method: 'rpc.add', params: {a: 2, b: 2}})).to.not.be.true;
 
 			expect(server.isValid({method: 'add', params: {a: 2, b: 2}})).to.not.be.true;
-    	});
+		});
 	});
-
 
 	describe('isMethodFound', function() {
 		var f = function(a,b) {};
@@ -211,7 +218,7 @@ describe('PostRPC.Server', function() {
 				error: {
 					code: internalErrorCode,
 					message: internalErrorMessage,
-					data: internalErrorData
+					data: internalServerErrorData
 				},
 				id: 11
 			});
@@ -260,6 +267,7 @@ describe('PostRPC.Server', function() {
 
 		});
 	});
+// {"jsonrpc":"2.0","error":{"code":-32000,"message":"Error","data":"toPrecision() argument must be between 1 and 21"},"id":11}
 
 	describe('event', function() {
 		it('should be correct response', function() {
@@ -281,9 +289,9 @@ describe('PostRPC.Server', function() {
 		var postSpy;
 
 	  	beforeEach(function() {
+    		postSpy = sinon.spy(server, 'post');
 			server.start();
 			client.start();
-    		postSpy = sinon.spy(server, 'post');
 	  	});
 
 		it('should publish notification', function() {
@@ -307,19 +315,19 @@ describe('PostRPC.Server', function() {
 
 		var addEventListenerSpy;
 
-	  	beforeEach(function() {
-    		addEventListenerSpy = sinon.spy(window, 'addEventListener');
-	  	});
+		beforeEach(function() {
+			addEventListenerSpy = sinon.spy(serverWindow, 'addEventListener');
+		});
 
 		it('should add event listener on message for window', function() {
 			server.start();
 
-		    expect(addEventListenerSpy.callCount).equal(1);
-		    expect(addEventListenerSpy.args[0][0]).equal('message');
+			expect(addEventListenerSpy.callCount).equal(1);
+			expect(addEventListenerSpy.args[0][0]).equal('message');
 		});
 
 		afterEach(function() {
-    		window.addEventListener.restore();
+			serverWindow.addEventListener.restore();
 		});
 	});
 
@@ -328,20 +336,19 @@ describe('PostRPC.Server', function() {
 
 		var removeEventListenerSpy;
 
-	  	beforeEach(function() {
- 			server.start();
-   			removeEventListenerSpy = sinon.spy(window, 'removeEventListener');
-	  	});
+		beforeEach(function() {
+			removeEventListenerSpy = sinon.spy(serverWindow, 'removeEventListener');
+			server.start();
+			server.stop();
+		});
 
 		it('should remove event listener on message for window', function() {
-			server.stop();
-
-		    expect(removeEventListenerSpy.callCount).equal(1);
-		    expect(removeEventListenerSpy.args[0][0]).equal('message');
+			expect(removeEventListenerSpy.callCount).equal(1);
+			expect(removeEventListenerSpy.args[0][0]).equal('message');
 		});
 
 		afterEach(function() {
-    		window.removeEventListener.restore();
+			serverWindow.removeEventListener.restore();
 		});
 	});
 
@@ -379,16 +386,16 @@ describe('PostRPC.Server', function() {
 		var postSpy;
 
 		beforeEach(function() {
+			postSpy = sinon.spy(server, 'post');
 			server.start();
 			client.start();
-			postSpy = sinon.spy(server, 'post');
 		});
 
 		it('should post invalid request', function() {
 			server.request({id: 11}, clientWindow);
 
 			expect(postSpy.callCount).to.be.equal(1);
-         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
 			expect(postSpy.getCall(0).args[1]).to.deep.equal({
 				jsonrpc: '2.0',
 				error: {
@@ -398,14 +405,14 @@ describe('PostRPC.Server', function() {
 				},
 				id: 11
 			});
-         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+			expect(postSpy.getCall(0).args[2]).to.equal('*');
 		});
 
 		it('should post method not found', function() {
 			server.request({jsonrpc: '2.0', method: 'notFound', params: {}, id: 11}, clientWindow);
 
 			expect(postSpy.callCount).to.be.equal(1);
-         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
 			expect(postSpy.getCall(0).args[1]).to.deep.equal({
 				jsonrpc: '2.0',
 				error: {
@@ -415,7 +422,7 @@ describe('PostRPC.Server', function() {
 				},
 				id: 11
 			});
-         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+			expect(postSpy.getCall(0).args[2]).to.equal('*');
 		});
 
 		it('should post invalid params', function() {
@@ -425,12 +432,12 @@ describe('PostRPC.Server', function() {
 				[['a', 'Number'], ['b', 'Number']],
 				'Number',
 				f,
-				'F(a,b)'
+				'F(a, b)'
 			);
 			server.request({jsonrpc: '2.0', method: 'f', params: {a: 1}, id: 11}, clientWindow);
 
 			expect(postSpy.callCount).to.be.equal(1);
-         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
 			expect(postSpy.getCall(0).args[1]).to.deep.equal({
 				jsonrpc: '2.0',
 				error: {
@@ -440,68 +447,78 @@ describe('PostRPC.Server', function() {
 				},
 				id: 11
 			});
-         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+			expect(postSpy.getCall(0).args[2]).to.equal('*');
 		});
 
-		it('should post promise success', function() {
-    		it('pending');
-			// var f = function(a, b) {
-			// 	var promise = new Promise(function(resolve, reject) {
-			// 		resolve({c: 101, d: 202});
-			// 	});
-			// 	return promise;
-			// };
-			// server.register(
-			// 	'f',
-			// 	[['a', 'Number'], ['b', 'Number']],
-			// 	'Number',
-			// 	f,
-			// 	'F(a, b)'
-			// );
-			// server.request({jsonrpc: '2.0', method: 'f', params: {a: 1, b: 2}, id: 11}, clientWindow);
+		describe("promise success", function() {
+			var f = function(a, b) {
+				return new Promise(function(resolve, reject) {
+					resolve({c: 101, d: 202});
+				});
+			};
 
-			// expect(postSpy.callCount).to.be.equal(1);
-			// expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
-			// expect(JSON.stringify(postSpy.getCall(0).args[1])).to.deep.equal({
-			// 	jsonrpc: '2.0',
-			// 	result: {
-			// 		c: 101,
-			// 		d: 202
-			// 	},
-			// 	id: 11
-			// });
-   			// expect(postSpy.getCall(0).args[2]).to.equal('*');
+			beforeEach(function() {
+				server.register(
+					'f',
+					[['a', 'Number'], ['b', 'Number']],
+					'Number',
+					f,
+					'F(a, b)'
+				);
+			});
+
+			it('should post promise success', function() {
+				return client.call('f', {a: 2, b: 2})
+				.then(function(result) {
+					expect(postSpy.callCount).to.be.equal(1);
+		         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+					expect(postSpy.getCall(0).args[1]).to.deep.equal({
+						jsonrpc: '2.0',
+						result: {
+							c: 101,
+							d: 202
+						},
+						id: 1
+					});
+					expect(postSpy.getCall(0).args[2]).to.equal('*');
+			    });
+			});
 		});
 
-		it('should post promise failure', function() {
-    		it('pending');
-			// var f = function(a, b) {
-			// 	var promise = new Promise(function(resolve, reject) {
-			// 		reject({name: 'No Answer', d: 'The remote server did not answer'});
-			// 	});
-			// 	return promise;
-			// };
-			// server.register(
-			// 	'f',
-			// 	[['a', 'Number'], ['b', 'Number']],
-			// 	'Number',
-			// 	f,
-			// 	'F(a,b)'
-			// );
-			// server.request({jsonrpc: '2.0', method: 'f', id: 11, params: {a: 1, b: 2}}, clientWindow);
+		describe("promise failure", function() {
+			var f = function(a, b) {
+				return new Promise(function(resolve, reject) {
+					reject({name: 'No Answer', data: 'The remote server did not answer'});
+				});
+			};
 
-			// expect(postSpy.callCount).to.be.equal(1);
-   			//  expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
-			// expect(JSON.stringify(postSpy.getCall(0).args[1])).to.deep.equal({
-			// 	jsonrpc: '2.0',
-			// 	error: {
-			// 		code: errorCode,
-			// 		message: 'No Answer',
-			// 		data: 'The remote server did not answer'
-			// 	},
-			// 	id: 11
-			// });
-   			//  expect(postSpy.getCall(0).args[2]).to.equal('*');
+			beforeEach(function() {
+				server.register(
+					'f',
+					[['a', 'Number'], ['b', 'Number']],
+					'Number',
+					f,
+					'F(a, b)'
+				);
+			});
+
+			it('should post promise failure', function() {
+				return client.call('f', {a: 2, b: 2})
+				.catch(function(result) {
+					expect(postSpy.callCount).to.be.equal(1);
+		         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+					expect(postSpy.getCall(0).args[1]).to.deep.equal({
+						jsonrpc: '2.0',
+						error: {
+							code: errorCode,
+							message: 'No Answer',
+							data: 'The remote server did not answer'
+						},
+						id: 1
+					});
+					expect(postSpy.getCall(0).args[2]).to.equal('*');
+			    });
+			});
 		});
 
 		it('should post allowable success', function() {
@@ -518,7 +535,7 @@ describe('PostRPC.Server', function() {
 			server.request({jsonrpc: '2.0', method: 'f', params: {a: 1, b: 2}, id: 11}, clientWindow);
 
 			expect(postSpy.callCount).to.be.equal(1);
-         	expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
 			expect(postSpy.getCall(0).args[1]).to.deep.equal({
 				jsonrpc: '2.0',
 				result: {
@@ -527,7 +544,7 @@ describe('PostRPC.Server', function() {
 				},
 				id: 11
 			});
-         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+			expect(postSpy.getCall(0).args[2]).to.equal('*');
 		});
 
 		it('should post invalid return', function() {
@@ -554,7 +571,7 @@ describe('PostRPC.Server', function() {
 				},
 				id: 11
 			});
-         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+			expect(postSpy.getCall(0).args[2]).to.equal('*');
 		});
 
 		it('should post try failure', function() {
@@ -580,7 +597,7 @@ describe('PostRPC.Server', function() {
 				},
 				id: 11
 			});
-         	expect(postSpy.getCall(0).args[2]).to.equal('*');
+			expect(postSpy.getCall(0).args[2]).to.equal('*');
 		});
 
 		afterEach(function() {
@@ -591,22 +608,22 @@ describe('PostRPC.Server', function() {
 
 	// logging(enabled)
 	describe('logging', function() {
-    	it('pending');
+		it('pending');
 	});
 
 	// log(messages, color = 'blue')
 	describe('log', function() {
-    	it('pending');
+		it('pending');
 	});
 
 	// logGroup(messages, color = 'blue')
 	describe('logGroup', function() {
-    	it('pending');
+		it('pending');
 	});
 
 	// logRegistered(color = 'blue')
 	describe('logRegistered', function() {
-    	it('pending');
+		it('pending');
 	});
 
 });

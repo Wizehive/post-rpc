@@ -1,9 +1,17 @@
 <html>
   <head>
     <meta charset="UTF-8">
+      <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+      <link href='/style.css' rel='stylesheet' type='text/css'>
   </head>
   <body style="background: #fefefe;">
-    <h1>PostRPC Plugin</h1>
+	  <div class="bar">
+		  <h1 class="title pullleft">PostRPC</h1>
+		  <h2 class="subtitle">JSON RPC protocol over postMessage transport</h2>
+	  </div>
+	  <ul id="list">
+	  </ul>
+
     <div id="content">
     </div>
  	<script type="text/javascript" src="../../PostRPC.Client.js"></script>
@@ -11,14 +19,68 @@
       // PostRPC Plugin iFrame
       //
 
-		var display = function (request, result, error) {
-			console.log('Plugin: request: ', request, 'result: ', result, 'error: ', error);
-			var content = document.getElementById('content');
-			var output = '';
-			output = output + '<div>Request: '+JSON.stringify(request)+'</div><br>';
-			output = output + '<div>Result: '+JSON.stringify(result)+'</div><br>';
-			output = output + '<div>Error: '+JSON.stringify(error)+'</div><br>';
-			content.innerHTML = content.innerHTML+'<div>'+output+'</div><br>';
+		var renderItem = function (id, clientRequest, clientRPCRequest, serverResponse, serverRPCResponse, status) {
+		  return '<li id="call-' + id + '">' +
+		 		'<div class="row">' +
+				  	'<div class="left">' +
+				   		'<div id="call-client-request-' + id + '" class="request primary" >' +
+				   			clientRequest +
+			   			'</div>' +
+			 		'</div>' +
+				  	'<div class="right">' +
+				   		'<div id="call-server-response-' + id + '" class="response ' + status + '" >' +
+				   			serverResponse +
+				   		'</div>' +
+			 		'</div>' +
+		 		'</div>' +
+		 		'<div class="row">' +
+				  	'<div class="left">' +
+				   		'<div id="call-client-rpc-request-' + id + '" class="request italic light primary" >' +
+				   			clientRPCRequest +
+				   		'</div>' +
+			 		'</div>' +
+				  	'<div class="right">' +
+				   		'<div id="call-server-rpc-response-' + id + '" class="response italic light ' + status + '" >' +
+				   			serverRPCResponse +
+				   		'</div>' +
+			 		'</div>' +
+		 		'</div>' +
+		  '</li>';
+  		}
+
+		var displayCall = function (clientRequest, clientRPCRequest, result, error) {
+			var id = clientRPCRequest.id;
+			var status;
+			var serverResponse;
+			var serverRPCResponse;
+			if (result) {
+				status = 'success';
+				serverResponse = JSON.stringify(result);
+				serverRPCResponse = JSON.stringify({jsonrpc: '2.0', result: result, id: id});
+
+			}
+			if (error) {
+				status = 'error';
+				serverResponse = JSON.stringify(error);
+				serverRPCResponse = JSON.stringify({jsonrpc: '2.0', error: error, id: id});
+			}
+			var html = renderItem(id, clientRequest, JSON.stringify(clientRPCRequest), serverResponse, serverRPCResponse, status);
+			var list = document.getElementById('list');
+			if (list) {
+				list.innerHTML = html + list.innerHTML;
+			}
+		}
+
+		var displayNotification = function (clientEvent, serverEvent, result) {
+			var id = null;
+			var status = 'notice';
+			var serverResponse = JSON.stringify(result);
+			var serverRPCResponse = JSON.stringify({jsonrpc: '2.0', name: serverEvent, result: result, id: null});
+			var html = renderItem(id, clientEvent, '', serverResponse, serverRPCResponse, status);
+			var list = document.getElementById('list');
+			if (list) {
+				list.innerHTML = html + list.innerHTML;
+			}
 		}
 
 		document.addEventListener("DOMContentLoaded", function(event) {
@@ -26,51 +88,51 @@
 			console.log("Plugin: DOM loaded and parsed");
 
 			var client = new window.PostRPC.Client('http://localhost:5001');
-			client.logging(false);
+			client.logging(true);
 			client.start();
 
 			client.subscribe('changed', function(result, error) {
-				display(null, result, error);
+				displayNotification('client.subscribe(\'changed\')', 'changed', result);
 			});
 
 			client.call(null, null, function(result, error) {
-				display(client.request(null, null, 1), result, error);
+				displayCall('client.call(null, null)', client.request(null, null, 1), result, error);
 			});
 
 			client.call('subtract', {a: 11}, function(result, error) {
-				display(client.request('subtract', {a: 11}, 2), result, error);
+				displayCall('client.call(\'subtract\', {a: 11})', client.request('subtract', {a: 11}, 2), result, error);
 			});
 
 			client.call('subtract', {a: 11, b: -8}, function(result, error) {
-				display(client.request('subtract', {a: 11, b: -8}, 3), result, error);
+				displayCall('client.call(\'subtract\', {a: 11, b: -8})', client.request('subtract', {a: 11, b: -8}, 3), result, error);
 			});
 
 			client.call('divide', {a: 2, b: 0}, function(result, error) {
-				display(client.request('divide', {a: 2, b: 0}, 4), result, error);
+				displayCall('client.call(\'divide\', {a: 2, b: 0})', client.request('divide', {a: 2, b: 0}, 4), result, error);
 			});
 
 			client.call('digits', {num: 1, n: 500}, function(result, error) {
-				display(client.request('digits', {num: 1, n: 500}, 5), result, error);
+				displayCall('client.call(\'digits\', {num: 1, n: 500})', client.request('digits', {num: 1, n: 500}, 5), result, error);
 			});
 
 			client.call('complex', {id: 101}, function(result, error) {
-				display(client.request('complex', {id: 101}, 6), result, error);
+				displayCall('client.call(\'complex\', {id: 101})', client.request('complex', {id: 101}, 6), result, error);
 			});
 
 			client.call('add', {a: 2, b: 2})
 			.then(function(result) {
-				display(client.request('add', {a: 2, b: 2}, 7), result, null);
+				displayCall('client.call(\'add\', {a: 2, b: 2})', client.request('add', {a: 2, b: 2}, 7), result, null);
 		    })
 			.catch(function(error) {
-				display(client.request('add', {a: 2, b: 2}, 8), null, error);
+				displayCall('client.call(\'add\', {a: 2, b: 2})', client.request('add', {a: 2, b: 2}, 7), null, error);
 		    });
 
 			client.call('getForms', {workspaceID: 11}, function(result, error) {
-				display(client.request('getForms', {workspaceID: 11}, 9), result, error);
+				displayCall('client.call(\'getForms\', {workspaceID: 11})', client.request('getForms', {workspaceID: 11}, 8), result, error);
 			});
 
 			client.call('getRecords', {formID: 101}, function(result, error) {
-				display(client.request('getRecords', {formID: 101}, 10), result, error);
+				displayCall('client.call(\'getRecords\', {formID: 101})', client.request('getForms', {formID: 101}, 9), result, error);
 			});
 
 		});

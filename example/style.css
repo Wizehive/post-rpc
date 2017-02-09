@@ -1,0 +1,148 @@
+body {
+	width: 100%;
+	font-family: 'Open Sans', sans-serif;
+	margin: none;
+	padding: none;
+}
+
+p { padding-bottom: 12px; }
+
+.bar {
+	width: 100%;
+	height: 64px;
+	background-color: #3A7297;
+	margin: none;
+	padding: 6px 18px 6px 18px;
+}
+
+.title {
+	color: #fff;
+	width: 160px;
+	margin-top: 8px;
+}
+
+.subtitle {
+	color: #ccc;
+	margin-top: 13px;
+}
+
+ul {
+	list-style: none;
+	background-color: #424242;
+	margin: none;
+	padding:  0px 0px 0px 0px;
+}
+
+li {
+    overflow: hidden;
+	color: #eee;
+	background-color: #e3e3e3;
+	padding: 6px 6px 6px 6px;
+}
+
+.row {
+	overflow: auto;
+	margin: none;
+}
+
+.italic {
+    font-style: italic;
+}
+
+.left {
+	display: inline-block;
+	float: left;
+	width: calc(50% - 8px);
+	margin: none;
+	padding: none;
+}
+
+.right {
+	display: inline-block;
+	float: right;
+	width: calc(50% - 8px);
+	margin: none;
+	padding: none;
+}
+
+::-webkit-scrollbar {
+display: none;
+}
+
+.request {
+	overflow: hidden;
+	width: 100%;
+	height: 64px;
+	background-color: #428bca;
+	padding: 8px 8px 8px 8px;
+}
+
+.response {
+	overflow: hidden;
+	width: 100%;
+	height: 64px;
+	background-color: #424242;
+	padding: 8px 8px 8px 8px;
+}
+
+.primary {
+	background-color: #428bca;
+}
+
+.light.primary {
+	background-color: #5ca5e4;
+}
+
+.success {
+	background-color: #70A938;
+}
+
+.light.success {
+	background-color: #8ac352;
+}
+
+.notice {
+	background-color: #BA4A8D;
+}
+
+.light.notice {
+	background-color: #D464A7;
+}
+
+.error {
+	background-color: #a93838;
+}
+
+.light.error {
+	background-color: #c35252;
+}
+
+.pullleft {
+	display: inline-block;
+	float: left;
+}
+
+.pullright {
+	display: inline-block;
+	float: right;
+}
+
+.clear {
+	clear:both;
+}
+
+/*
+"Open Sans",sans-s
+
+.toolbar background: #3A7297
+.button background: #3A7294
+background: #428bca
+border: #357ebd
+.toobar highlight: #1E3A4D
+
+ul: grey
+#e3e3e3
+#424242
+
+success: #70A938
+*/

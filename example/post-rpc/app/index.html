@@ -3,7 +3,7 @@
     <meta charset="UTF-8">
   </head>
   <body style="background: #f3f3f3;">
-    <iframe id="client" width="100%" height="3000px" src="/post-rpc/plugin/" style="border: none;" sandbox="allow-scripts"></iframe>
+    <iframe id="client" width="100%" height="100%" src="/post-rpc/plugin/" style="border: none;" sandbox="allow-scripts"></iframe>
 	<script type="text/javascript" src="../../PostRPC.Server.js"></script>
     <script type="text/javascript">
 
@@ -80,7 +80,6 @@
 					{id: 70003, field1: 'C', field2: 2}
 				]);
 			});
-			console.log('promise type:', typeof promise);
 			return promise;
 		};
 
@@ -97,7 +96,7 @@
 			console.log("App: DOM loaded and parsed");
 
 			var server = new window.PostRPC.Server('http://localhost:5001');
-			server.logging(false);
+			server.logging(true);
 
 			server.register('add',[['a', 'Number'], ['b', 'Number']], 'Number', add, 'Calculate the sum of two numbers');
 
