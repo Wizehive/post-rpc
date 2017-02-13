@@ -6,7 +6,7 @@
     "build": "webpack && webpack --mode=build",
     "example": "webpack-dev-server --content-base example/ --host localhost --port 5001 --colors --watch",
     "blanket": "webpack-dev-server --host localhost --port 6001 --colors --watch",
-    "test": "webpack && grunt karma"
+    "test": "webpack && grunt karma:dev"
   },
   "dependencies": {
     "native-promise-only": ""

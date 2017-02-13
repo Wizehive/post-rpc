@@ -25,9 +25,9 @@
 		<!-- The source file we will be testing! Don't forget the data-cover attribute so Blanket will know which file will need to be instrumented for coverage. -->
 		<script src="../PostRPC.Server.js" data-cover></script>
 		<script src="../PostRPC.Client.js" data-cover></script>
-		<!-- Our test suite needs to be after the source file, of course -->
 		<script src="fixtures.js"></script>
-		<script src="bootstrap.js"></script>
+		<script src="blanket.js"></script>
+		<!-- Our test suite needs to be after the source file, of course -->
 		<script src="polyfills.js"></script>
 		<script src="helpers.js"></script>
 		<script src="server.spec.js"></script>
