@@ -1,21 +1,22 @@
 var createFixture = function (origin, libpath) {
+	var serverIframe, serverWindow, serverDocument, serverSource;
 	// Create(if not exist) server iframe
-	var serverIframe = top.document.getElementById('server');
+	serverIframe = top.document.getElementById('server');
 	if (!serverIframe) {
 		serverIframe = top.document.createElement('iframe');
         serverIframe.setAttribute('src', 'about:blank');
 		serverIframe.setAttribute('id', 'server');
 		serverIframe.setAttribute('style', 'position: fixed; top: 0; left: -99999px;');
         top.document.body.appendChild(serverIframe);
-		var serverWindow = serverIframe.contentWindow;
-		var serverDocument = serverWindow.document;
-		var serverSource = [
+		serverWindow = serverIframe.contentWindow;
+		serverDocument = serverWindow.document;
+		serverSource = [
 			'<html>',
 			'  <head>',
 			'    <meta charset="UTF-8">',
 			'  </head>',
 			'  <body>',
-			'    <script type="text/javascript" src="' + libpath + '/PostRPC.Server.js"></script>',
+			'    <script type="text/javascript" src="' + libpath + '/PostRPC.Server.js"  data-cover></script>',
 			'    <script type="text/javascript">',
 			'        try {',
 			'          console.log(\'create window.PostRPC.Server\');',
@@ -32,29 +33,30 @@ var createFixture = function (origin, libpath) {
 		for (var i = 0; i < serverSource.length; i++) {
 			serverDocument.write(serverSource[i]);
 		}
-		serverDocument.close()
+		serverDocument.close();
     }
-	var serverIframe = top.document.getElementById('server');
-	var serverWindow = serverIframe.contentWindow;
-	var serverDocument = serverWindow.document;
+	serverIframe = top.document.getElementById('server');
+	serverWindow = serverIframe.contentWindow;
+	serverDocument = serverWindow.document;
 
+	var clientIframe, clientWindow, clientDocument, clientSource;
 	// Create(if not exist) client iframe
-	var clientIframe = serverDocument.getElementById('client');
+	clientIframe = serverDocument.getElementById('client');
 	if (!clientIframe) {
-		var clientIframe = serverDocument.createElement('iframe');
+		clientIframe = serverDocument.createElement('iframe');
         clientIframe.setAttribute('src', 'about:blank');
 		clientIframe.setAttribute('id', 'client');
 		clientIframe.setAttribute('style', 'position: fixed; top: 0; left: -99999px;');
         serverDocument.body.appendChild(clientIframe);
-		var clientWindow = clientIframe.contentWindow;
-		var clientDocument = clientWindow.document;
-		var clientSource = [
+		clientWindow = clientIframe.contentWindow;
+		clientDocument = clientWindow.document;
+		clientSource = [
 			'<html>',
 			'  <head>',
 			'    <meta charset="UTF-8">',
 			'  </head>',
 			'  <body>',
-			'    <script type="text/javascript" src="' + libpath + '/PostRPC.Client.js"></script>',
+			'    <script type="text/javascript" src="' + libpath + '/PostRPC.Client.js"  data-cover></script>',
 			'    <script type="text/javascript">',
 			'        try {',
 			'          console.log(\'create window.PostRPC.Client\');',
@@ -68,14 +70,14 @@ var createFixture = function (origin, libpath) {
 			'</html>'
 		];
 		clientDocument.open();
-		for (var i = 0; i < clientSource.length; i++) {
-			clientDocument.write(clientSource[i]);
+		for (var j = 0; j < clientSource.length; j++) {
+			clientDocument.write(clientSource[j]);
 		}
-		clientDocument.close()
+		clientDocument.close();
     }
-	var clientIframe = serverDocument.getElementById('client');
-	var clientWindow = clientIframe.contentWindow;
-	var clientDocument = clientWindow.document;
+	clientIframe = serverDocument.getElementById('client');
+	clientWindow = clientIframe.contentWindow;
+	clientDocument = clientWindow.document;
 };
 
 var findClientWindow = function () {
@@ -104,63 +106,10 @@ var findServer = function () {
 	return serverIframe.contentWindow.postrpc_server;
 };
 
-var sleep = function (milliseconds) {
-  var start = new Date().getTime();
-  for (var i = 0; i < 1e7; i++) {
-    if ((new Date().getTime() - start) > milliseconds){
-      break;
-    }
-  }
-};
-
-var waitForFixture = function (milliseconds) {
-	console.log('wait for fixture...');
-	var start = new Date().getTime();
-	for (var i = 0; i < 1e7; i++) {
-		if (findServer() && findClient()) {
-			console.log('fixture ready');
-			break;
-		}
-		if ((new Date().getTime() - start) > milliseconds){
-			console.log('fixture timeout');
-			break;
-		}
-	}
-};
-
-var waitForServer = function (milliseconds) {
-	console.log('wait for server fixture...');
-	var start = new Date().getTime();
-	for (var i = 0; i < 1e7; i++) {
-		if (findServer()) {
-			console.log('fixture ready');
-			break;
-		}
-		if ((new Date().getTime() - start) > milliseconds){
-			console.log('fixture timeout');
-			break;
-		}
-	}
-};
-var waitForClient = function (milliseconds) {
-	console.log('wait for client fixture...');
-	var start = new Date().getTime();
-	for (var i = 0; i < 1e7; i++) {
-		if (findClient()) {
-			console.log('fixture ready');
-			break;
-		}
-		if ((new Date().getTime() - start) > milliseconds){
-			console.log('fixture timeout');
-			break;
-		}
-	}
-};
-
 var logTop = function () {
 	console.log('context:');
 	console.log(top.document.documentElement.innerHTML);
-}
+};
 
 var logContext = function () {
 	var contextIframe = top.document.getElementById('context');
@@ -170,31 +119,33 @@ var logContext = function () {
 	} else {
 		console.log('contextIframe NOT found');
 	}
-}
+};
 
 var logFixture = function () {
-	var serverIframe = top.document.getElementById('server');
+	var serverIframe, serverWindow, serverDocument, server;
+	var clientIframe, clientWindow, clientDocument, client;
+
+	serverIframe = top.document.getElementById('server');
 	if (serverIframe) {
 		console.log('serverIframe found');
-		var serverWindow = serverIframe.contentWindow;
+		serverWindow = serverIframe.contentWindow;
 		if (serverIframe) {
 			console.log('serverWindow found');
-			var serverDocument = serverWindow.document;
+			serverDocument = serverWindow.document;
 			if (serverDocument) {
 				console.log('serverDocument found');
-				var clientIframe = serverDocument.getElementById('client');
+				clientIframe = serverDocument.getElementById('client');
 				if (clientIframe) {
 					console.log('clientIframe found');
-					var clientIframe = serverDocument.getElementById('client');
+					clientIframe = serverDocument.getElementById('client');
 					if (clientIframe) {
 						console.log('clientIframe found');
-						var clientWindow = clientIframe.contentWindow;
+						clientWindow = clientIframe.contentWindow;
 						if (clientWindow) {
 							console.log('clientWindow found');
-							var clientDocument = clientWindow.document;
+							clientDocument = clientWindow.document;
 							if (clientDocument) {
 								console.log('clientDocument found');
-
 
 								if (top === serverWindow) {
 									console.log('serverWindow same as top');
@@ -206,13 +157,14 @@ var logFixture = function () {
 									console.log('serverWindow same as clientWindow');
 								}
 
-								var server = serverWindow.postrpc_server;
+								server = serverWindow.postrpc_server;
 								if (server) {
 									console.log('server found');
 								} else {
 									console.log('server NOT found');
 								}
-								var client = clientWindow.postrpc_client;
+
+								client = clientWindow.postrpc_client;
 								if (client) {
 									console.log('client found');
 								} else {
@@ -248,4 +200,4 @@ var logFixture = function () {
 	} else {
 		console.log('serverIframe NOT found');
 	}
-}
+};

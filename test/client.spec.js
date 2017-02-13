@@ -1,176 +1,320 @@
-// var expect = chai.expect;
+var expect = chai.expect;
 
-// var origin = 'http://localhost:6001';
+var origin = 'http://localhost:6001';
 
-// var serverWindow, serverDocument, server;
+var serverWindow, serverDocument, server;
 
-// var clientWindow, clientDocument, client;
+var clientWindow, clientDocument, client;
 
-// describe('PostRPC.Client', function() {
+var jsonrpc = '2.0';
 
-	// before(function() {
+var timeoutCode = -32001,
+	  timeoutMessage = 'Timeout',
+	  timeoutData = 'The server didn\'t respond to request within timeframe allowed';
 
-	// 	var details = setup(origin);
+var internalErrorCode = -32603,
+	  internalErrorMessage = 'Internal error',
+	  internalErrorData = 'Internal JSON-RPC client error';
 
-	// 	serverWindow = details.serverWindow;
-	// 	serverDocument = details.serverDocument;
-	// 	server = details.server;
+var errorCode = -32000;
 
-	// 	clientWindow = details.clientWindow;
-	// 	clientDocument = details.clientDocument;
-	// 	client = details.client;
+describe('PostRPC.Client', function() {
+	// console.log('describe: PostRPC.Client: started');
 
-	//   	if (serverWindow !== server.window) {
-	//   		throw new Error('Server not in expected server window');
-	//   	}
+	before(function() {
+		// console.log('PostRPC.Client: before()');
 
-	//   	if (clientWindow !== client.window) {
-	//   		throw new Error('Client not in expected client window');
-	//   	}
+		// logFixture();
 
-	//   	if (serverWindow === clientWindow) {
-	//   		throw new Error('Client and Server can\'t be in same window');
-	//   	}
+		server = findServer();
+		client = findClient();
+		serverWindow = findServerWindow();
+		clientWindow = findClientWindow();
 
-	//   	if (server.window === client.window) {
-	//   		throw new Error('Client and Server can\'t be in same window');
-	//   	}
+	  	if (server.window === client.window) {
+	  		throw new Error('server.window and client.window can\'t be same window');
+	  	}
 
-	// });
+	});
 
-// 	after(function() {
-// 	});
+	after(function() {
+	});
 
-// 	beforeEach(function() {
-// 		server.init(origin);
-// 		client.init(origin);
-// 	});
+	beforeEach(function() {
+		server.init(origin);
+		client.init(origin);
+	});
 
-// 	afterEach(function() {
-// 	});
+	afterEach(function() {
+	});
 
-// 	describe('name', function() {
-// 		it('should return the name', function() {
-// 			expect(client.name).to.be.equal('PostRPC.Client');
-// 		});
-// 	});
+	describe('name', function() {
+		it('should return the name', function() {
+			expect(client.name).to.be.equal('PostRPC.Client');
+		});
+	});
 
-// 	describe('origin', function() {
-// 		it('should return the origin', function() {
-// 			expect(client.origin).to.be.equal('http://localhost:6001');
-// 		});
-// 	});
+	describe('origin', function() {
+		it('should return the origin', function() {
+			expect(client.origin).to.be.equal('http://localhost:6001');
+		});
+	});
 
-// 	// get id()
-// 	describe('id', function() {
-//     	it('pending');
-// 	});
+	// get id()
+	describe('id', function() {
+		it('should return the id', function() {
+			expect(client.id).to.be.equal(1);
+		});
+	});
 
-// 	// get subscribed()
-// 	describe('subscribed', function() {
-//     	it('pending');
-// 	});
+	// subscribe(event, callback)
+	describe('subscribe', function() {
+		var cb = function(result,error) {};
+		it('should subscribe to the event', function() {
+			expect(client.subscribe(
+				'changed',
+				cb
+			)).to.be.true;
 
-// 	// subscribe(event, callback)
-// 	describe('subscribe', function() {
-//     	it('pending');
-// 	});
+			expect(client.subscribed.changed).to.deep.equal({
+				callback: cb
+			});
+		});
+	});
 
-// 	// unsubscribe(event)
-// 	describe('unsubscribe', function() {
-//     	it('pending');
-// 	});
+	// unsubscribe(event)
+	describe('unsubscribe', function() {
+		var cb = function(result,error) {};
+		it('should unsubscribe from the event', function() {
+			client.subscribe(
+				'changed',
+				cb
+			);
+			expect(client.unsubscribe('changed')).to.be.true;
 
-// 	// nextID()
-// 	describe('nextID', function() {
-//     	it('pending');
-// 	});
+			expect(client.subscribed.hasOwnProperty('changed')).to.equal(false);
+		});
+	});
 
-// 	// start()
-// 	describe('start', function() {
+	// nextID()
+	describe('nextID', function() {
+		it('should return the ids in sequence', function() {
+			expect(client.nextID()).to.be.equal(1);
+			expect(client.nextID()).to.be.equal(2);
+			expect(client.nextID()).to.be.equal(3);
+		});
+	});
 
-// 		var addEventListenerSpy;
+	// start()
+	describe('start', function() {
 
-// 	  	beforeEach(function() {
-//     		addEventListenerSpy = sinon.spy(window, 'addEventListener');
-// 			server.start();
-// 	  	});
+		var addEventListenerSpy;
 
-// 		it('should add event listener on message for window', function() {
-// 		    expect(addEventListenerSpy.callCount).equal(1);
-// 		    expect(addEventListenerSpy.args[0][0]).equal('message');
-// 		});
+		beforeEach(function() {
+			addEventListenerSpy = sinon.spy(clientWindow, 'addEventListener');
+		});
 
-// 		afterEach(function() {
-//     		window.addEventListener.restore();
-// 		});
-// 	});
+		it('should add event listener on message for window', function() {
+			client.start();
 
-// 	// stop()
-// 	describe('stop', function() {
+			expect(addEventListenerSpy.callCount).equal(1);
+			expect(addEventListenerSpy.args[0][0]).equal('message');
+		});
 
-// 		var removeEventListenerSpy;
+		afterEach(function() {
+			clientWindow.addEventListener.restore();
+		});
+	});
 
-// 	  	beforeEach(function() {
-//     		removeEventListenerSpy = sinon.spy(window, 'removeEventListener');
-// 			server.start();
-// 	  	});
+	// stop()
+	describe('stop', function() {
 
-// 		it('should remove event listener on message for window', function() {
-// 			server.stop();
+		var removeEventListenerSpy;
 
-// 		    expect(removeEventListenerSpy.callCount).equal(1);
-// 		    expect(removeEventListenerSpy.args[0][0]).equal('message');
-// 		});
+		beforeEach(function() {
+			removeEventListenerSpy = sinon.spy(clientWindow, 'removeEventListener');
+			client.start();
+			client.stop();
+		});
 
-// 		afterEach(function() {
-//     		window.removeEventListener.restore();
-// 		});
-// 	});
+		it('should remove event listener on message for window', function() {
+			expect(removeEventListenerSpy.callCount).equal(1);
+			expect(removeEventListenerSpy.args[0][0]).equal('message');
+		});
 
-// 	// request(method, params, id)
-// 	describe('request', function() {
-//     	it('pending');
-// 	});
+		afterEach(function() {
+			clientWindow.removeEventListener.restore();
+		});
+	});
 
-// 	// timeoutResponse(id)
-// 	describe('timeoutResponse', function() {
-//     	it('pending');
-// 	});
+	// request(method, params, id)
+	describe('request', function() {
+		it('should be form correct request', function() {
+			expect(client.request('add', {a: 2, b: -18}, 1)).to.deep.equal({
+				jsonrpc: '2.0',
+				method: 'add',
+				params: {
+					a: 2,
+					b: -18
+				},
+				id: 1
+			});
 
-// 	// internalErrorResponse(id)
-// 	describe('internalErrorResponse', function() {
-//     	it('pending');
-// 	});
+		});
 
-// 	// call(method, params, callback = null, timeout = 5000)
-// 	describe('call', function() {
-//     	it('pending');
-// 	});
+	});
 
-// 	// timeoutHandler()
-// 	describe('timeoutHandler', function() {
-//     	it('pending');
-// 	});
+	describe('timeoutResponse', function() {
+		it('should be correct response', function() {
 
-// 	// messageHandler(event)
-// 	describe('messageHandler', function() {
-//     	it('pending');
-// 	});
+			expect(client.timeoutResponse(11)).to.deep.equal({
+				jsonrpc: '2.0',
+				error: {
+					code: timeoutCode,
+					message: timeoutMessage,
+					data: timeoutData
+				},
+				id: 11
+			});
 
-// 	// logging(enabled)
-// 	describe('logging', function() {
-//     	it('pending');
-// 	});
+		});
+	});
 
-// 	// log(messages, color = 'green')
-// 	describe('log', function() {
-//     	it('pending');
-// 	});
+	describe('internalErrorResponse', function() {
+		it('should be correct response', function() {
 
-// 	// logGroup(messages, color = 'blue')
-// 	describe('logGroup', function() {
-//     	it('pending');
-// 	});
+			expect(client.internalErrorResponse(11)).to.deep.equal({
+				jsonrpc: '2.0',
+				error: {
+					code: internalErrorCode,
+					message: internalErrorMessage,
+					data: internalErrorData
+				},
+				id: 11
+			});
 
-// });
+		});
+	});
+
+	// call(method, params, callback = null, timeout = 5000)
+	describe('call', function() {
+
+		beforeEach(function() {
+			server.start();
+			client.start();
+		});
+
+		it('should return result with callback', function(done) {
+			var f = function(a, b) {
+				return {c: 101, d: 202};
+			};
+			var cb = function(result, error) {
+				expect(result).to.deep.equal({
+					c: 101,
+					d: 202
+				});
+				expect(error).to.equal(null);
+				done();
+			};
+			server.register(
+				'f',
+				[['a', 'Number'], ['b', 'Number']],
+				'Number',
+				f,
+				'F(a, b)'
+			);
+			expect(client.call('f', {a: 2, b: -18}, cb)).to.equal(null);
+		});
+
+		it('should return error with callback', function(done) {
+			var f = function(a, b) {
+				throw new Error('Something went wrong');
+			};
+			var cb = function(result, error) {
+				expect(result).to.equal(null);
+				expect(error).to.deep.equal({
+					code: errorCode,
+					message: 'Error',
+					data: 'Something went wrong'
+				});
+				done();
+			};
+			server.register(
+				'f',
+				[['a', 'Number'], ['b', 'Number']],
+				'Number',
+				f,
+				'F(a, b)'
+			);
+			expect(client.call('f', {a: 2, b: -18}, cb)).to.equal(null);
+		});
+
+		it('should return result with promise', function() {
+			var f = function(a, b) {
+				return {c: 101, d: 202};
+			};
+			server.register(
+				'f',
+				[['a', 'Number'], ['b', 'Number']],
+				'Number',
+				f,
+				'F(a, b)'
+			);
+			return client.call('f', {a: 2, b: -18})
+			.then(function(result) {
+				expect(result).to.deep.equal({
+					c: 101,
+					d: 202
+				});
+		    });
+		});
+
+		it('should return error with promise', function() {
+			var f = function(a, b) {
+				throw new Error('Something went wrong');
+			};
+			server.register(
+				'f',
+				[['a', 'Number'], ['b', 'Number']],
+				'Number',
+				f,
+				'F(a, b)'
+			);
+			return client.call('f', {a: 2, b: -18})
+			.catch(function(error) {
+				expect(error).to.deep.equal({
+					code: errorCode,
+					message: 'Error',
+					data: 'Something went wrong'
+				});
+		    });
+		});
+
+	});
+
+	// timeoutHandler()
+	describe('timeoutHandler', function() {
+    	it('pending');
+	});
+
+	// messageHandler(event)
+	describe('messageHandler', function() {
+    	it('pending');
+	});
+
+	// logging(enabled)
+	describe('logging', function() {
+    	it('pending');
+	});
+
+	// log(messages, color = 'green')
+	describe('log', function() {
+    	it('pending');
+	});
+
+	// logGroup(messages, color = 'blue')
+	describe('logGroup', function() {
+    	it('pending');
+	});
+
+});

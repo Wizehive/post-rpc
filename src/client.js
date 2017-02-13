@@ -136,6 +136,7 @@ export default class PostRPCClient {
 		this._subscribed[event] = {
 			callback: callback
 		};
+		return true;
 	}
 
 	/**
@@ -145,6 +146,7 @@ export default class PostRPCClient {
 	*/
 	unsubscribe(event) {
 		delete this._subscribed[event];
+		return true;
 	}
 
 	/**

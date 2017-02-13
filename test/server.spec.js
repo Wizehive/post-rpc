@@ -35,32 +35,22 @@ var invalidReturnCode = -32604,
 
 var errorCode = -32000;
 
-//waitForFixture(300);
-
-// logTop();
-// sleep(3000);
-// logFixture();
-
 describe('PostRPC.Server', function() {
-	console.log('describe: PostRPC.Server: started');
-	// var serverIframe = findServerIframe();
-	// console.log('serverIframe', serverIframe);
-	// logTop();
-	// logContext();
+	// console.log('describe: PostRPC.Server: started');
 
 	before(function() {
-		console.log('PostRPC.Server: before()');
+		// console.log('PostRPC.Server: before()');
 
-		logFixture();
+		// logFixture();
 
 		server = findServer();
 		client = findClient();
 		serverWindow = findServerWindow();
 		clientWindow = findClientWindow();
 
-	  	// if (server.window === client.window) {
-	  	// 	throw new Error('server.window and client.window can\'t be same window');
-	  	// }
+	  	if (server.window === client.window) {
+	  		throw new Error('server.window and client.window can\'t be same window');
+	  	}
 
 	});
 
