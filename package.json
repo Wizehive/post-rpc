@@ -3,12 +3,10 @@
   "version": "0.5.0",
   "description": "PostRPC - JSON RPC over PostMessage",
   "scripts": {
-    "build": "webpack --mode=build",
-    "deploy": "cp lib/PostRPC* example/post-rpc/app/js && cp lib/PostRPC* example/post-rpc/plugin/js",
-    "dev": "webpack-dev-server --content-base example/ --host localhost --port 5001 --colors --watch",
-    "testing": "webpack-dev-server --host localhost --port 5001 --colors --watch",
-    "test": "mocha --compilers js:babel-core/register --colors ./test/*.spec.js",
-    "test:watch": "mocha --compilers js:babel-core/register --colors -w ./test/*.spec.js"
+    "build": "webpack && webpack --mode=build",
+    "example": "webpack-dev-server --content-base example/ --host localhost --port 5001 --colors --watch",
+    "blanket": "webpack-dev-server --host localhost --port 6001 --colors --watch",
+    "test": "webpack && grunt karma:dev"
   },
   "dependencies": {
     "native-promise-only": ""

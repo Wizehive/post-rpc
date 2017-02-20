@@ -14,7 +14,7 @@
  * instance.  Register the set of methods the server will respond to
  * and then start the server:
  *
- *		var server = new window.PostRPC.Server('http://localhost:5001');
+ *		var server = new PostRPC.Server('http://localhost:5001');
  *
  *		server.register('add', {a: 'Number', b: 'Number'}, 'Number', add);
  *		server.register('multiply', {a: 'Number', b: 'Number'}, 'Number', multiply);
@@ -47,18 +47,36 @@ const invalidParamsCode = -32602,
 
 const internalErrorCode = -32603,
 	  internalErrorMessage = 'Internal error',
-	  internalErrorData = 'Internal JSON-RPC error';
+	  internalErrorData = 'Internal JSON-RPC server error';
+
+const invalidReturnCode = -32604,
+	  invalidReturnMessage = 'Invalid return',
+	  invalidReturnData = 'Invalid method return type';
 
 const errorCode = -32000;
+
+const allowable = [
+	'boolean',
+	'null',
+	'undefined',
+	'number',
+	'string',
+	'symbol',
+	'object',
+	'array'
+];
 
 export default class PostRPCServer {
 
 	/**
 	 * Construct server instance
+	 * @param {Window} hostWindow  window server runs in
 	 * @param {String} origin  origin uri expected from client
 	 * @return {PostRPCServer} instance
 	 */
 	constructor(origin) {
+		this._running = null;
+		this._listener = undefined;
 		this.init(origin);
 	}
 
@@ -68,11 +86,11 @@ export default class PostRPCServer {
 	 * @return {Undefined}
 	 */
 	init(origin) {
+		this.stop();
 		this._name = 'PostRPC.Server';
 		this._origin = origin;
 		this._registered = {};
 		this._logging = false;
-		window.removeEventListener('message', (event) => this.messageHandler(event));
 	}
 
 	/**
@@ -92,6 +110,14 @@ export default class PostRPCServer {
 	}
 
 	/**
+	 * Get window server is in
+	 * @return {Window}
+	 */
+	get window() {
+		return window;
+	}
+
+	/**
 	 * Get list of registered RPC's
 	 * @return {Array[Object]} rpcs
 	 */
@@ -108,8 +134,7 @@ export default class PostRPCServer {
 	 * @return {Boolean}
 	*/
 	register(method, params, ret, func, desc) {
-		this.log([
-			'register',
+		this.logGroup('register', [
 			'method: ' + method,
 			'params: ' + JSON.stringify(params),
 			'return: ' + JSON.stringify(ret),
@@ -250,6 +275,22 @@ export default class PostRPCServer {
 	}
 
 	/**
+	 * JSON-RPC v2 invalid return response
+	 * @return {Object} response
+	*/
+	invalidReturnResponse(request) {
+		return {
+			jsonrpc: jsonrpc,
+			error: {
+				code: invalidReturnCode,
+				message: invalidReturnMessage,
+				data: invalidReturnData
+			},
+			id: request.id
+		};
+	}
+
+	/**
 	 * JSON-RPC v2 success response
 	 * @return {Object} response
 	*/
@@ -265,17 +306,64 @@ export default class PostRPCServer {
 	 * JSON-RPC v2 failure response
 	 * @return {Object} response
 	*/
-	failure(code, message, data, id) {
+	failure(error, id) {
+		if (error instanceof Error) {
+			return {
+				jsonrpc: jsonrpc,
+				error: {
+					code: errorCode,
+					message: error.name,
+					data: error.message
+				},
+				id: id
+			};
+		} else if (typeof error === 'object') {
+			var message, data;
+			if (error.name || error.hasOwnProperty('name')) {
+				message = error.name;
+			} else if (error.hasOwnProperty('error')) {
+				message = error.error;
+			} else {
+				message = 'Error';
+			}
+			if (error.message || error.hasOwnProperty('message')) {
+				data = error.message;
+			} else if (error.hasOwnProperty('detail')) {
+				data = error.detail;
+			} else if (error.hasOwnProperty('data')) {
+				data = error.data;
+			} else {
+				data = JSON.stringify(error);
+			}
+			return {
+				jsonrpc: jsonrpc,
+				error: {
+					code: errorCode,
+					message: message,
+					data: data
+				},
+				id: id
+			};
+		} else if (typeof error === 'string') {
+			return {
+				jsonrpc: jsonrpc,
+				error: {
+					code: errorCode,
+					message: 'Error',
+					data: error
+				},
+				id: id
+			};
+		}
 		return {
 			jsonrpc: jsonrpc,
 			error: {
-				code: code,
-				message: message,
-				data: data
+				code: errorCode,
+				message: 'Error',
+				data: JSON.stringify(error)
 			},
 			id: id
 		};
-
 	}
 
 	/**
@@ -298,15 +386,20 @@ export default class PostRPCServer {
 	 * @return {Undefined}
 	*/
 	publish(name, result) {
-		var messages = ['publish: name: ' + name + ', result: ' + JSON.stringify(result)];
+		if (this._running) {
+			var messages = ['publish: name: ' + name + ', result: ' + JSON.stringify(result)];
 
-		for (var i = 0; i < window.frames.length; i++) {
-			var frame = window.frames[i];
+			for (var i = 0; i < window.frames.length; i++) {
+				var frame = window.frames[i];
 
-			frame.postMessage(this.event(result, name), '*');
+				this.post(frame, this.event(result, name), '*');
+
+			}
+			messages.push('(' + window.frames.length + ') post publish');
+			this.log(messages);
+		} else {
+			throw new Error('Server is not running');
 		}
-		messages.push('(' + window.frames.length + ') post publish');
-		this.log(messages);
 	}
 
 	/**
@@ -314,7 +407,11 @@ export default class PostRPCServer {
 	 * @return {Undefined}
 	*/
 	start() {
-		window.addEventListener('message', (event) => this.messageHandler(event));
+		if (this._listener === undefined) {
+			this._listener = this.messageHandler.bind(this);
+			window.addEventListener('message', this._listener);
+		}
+		this._running = true;
 	}
 
 	/**
@@ -322,7 +419,11 @@ export default class PostRPCServer {
 	 * @return {Undefined}
 	*/
 	stop() {
-		window.removeEventListener('message', (event) => this.messageHandler(event));
+		if (this._listener) {
+			window.removeEventListener('message', this._listener);
+			this._listener = undefined;
+		}
+		this._running = false;
 	}
 
 	/**
@@ -349,58 +450,106 @@ export default class PostRPCServer {
 	}
 
 	/**
-	 * Handle postMessage events for parent window
-	 * @param {Object} event
+	 * Wrap postMessage for testablity
+	 * @param {Window} targetWindow
+	 * @param {Object} message
+	 * @param {String} targetOrigin
 	 * @return {Undefined}
 	*/
-	messageHandler(event) {
-		// this.log([
-		// 	'event origin' + event.origin,
-		// 	'event data' + event.data,
-		// 	'event source' + event.source,
-		// 	'this origin' + this._origin
-		// ]);
+	post(targetWindow, message, targetOrigin) {
+		// console.log('server post', message);
+		if (this._running && targetWindow) {
+			targetWindow.postMessage(message, targetOrigin);
+		}
+	}
 
-		// if (!event.origin || event.origin === this._origin) {
-			var request = event.data;
+	/**
+	 * Wrap request for testablity
+	 * @param {Object} request
+	 * @param {Window} targetWindow
+	 * @return {Undefined}
+	*/
+	request(request, targetWindow) {
+
+		if (this._running) {
 			var messages = ['request: ' + JSON.stringify(request)];
 
 			if (!this.isValid(request)) {
-
 				messages.push('post invalid');
-				event.source.postMessage(this.invalidRequestResponse(request), '*');
-
+				this.post(targetWindow, this.invalidRequestResponse(request), '*');
 			} else if (!this.isMethodFound(request)) {
-
 				messages.push('post method not found');
-				event.source.postMessage(this.methodNotFoundResponse(request), '*');
-
+				this.post(targetWindow, this.methodNotFoundResponse(request), '*');
 			} else {
-
 				var rpc = this._registered[request.method];
 				var func = rpc.function;
 				var args = this.mapParams(request.params, rpc.params);
 				if (args.length !== rpc.params.length) {
 					messages.push('post invalid params');
-					event.source.postMessage(this.invalidParamsResponse(request), '*');
+					this.post(targetWindow, this.invalidParamsResponse(request), '*');
 				} else {
 					messages.push('call: ' + request.method + '(' + args.join(', ') + ')');
 					try {
 						var result = func(...args);
-						messages.push('return: ' + JSON.stringify(result));
-						messages.push('post success');
-						event.source.postMessage(this.success(result, request.id), '*');
-					} catch(err) {
-						messages.push('error: name: ' + err.name + ', message: ' + err.message);
-						messages.push('post failure');
-						event.source.postMessage(this.failure(errorCode, err.name, err.message, request.id), '*');
+
+						if (typeof result === 'object' && typeof result.then === 'function') {
+							messages.push('func result is a promise');
+							var self = this;
+							result
+							.then(function (res) {
+								self.log([
+									'return: ' + JSON.stringify(res),
+									'post promise success'
+								]);
+								self.post(targetWindow, self.success(res, request.id), '*');
+							})
+							.catch(function (err) {
+								self.log([
+									'return: ' + JSON.stringify(err),
+									'post promise failure'
+								]);
+								self.post(targetWindow, self.failure(err, request.id), '*');
+						    });
+						} else if (allowable.indexOf(typeof result) >= 0) {
+							messages.push('func result is allowable type');
+							messages.push('return: ' + JSON.stringify(result));
+							messages.push('post allowable success');
+							this.post(targetWindow, this.success(result, request.id), '*');
+						} else if (allowable.indexOf(typeof result) < 0) {
+							messages.push('func result is NOT allowable type');
+							messages.push('type: ' + typeof result);
+							messages.push('post invalid return');
+							this.post(targetWindow, this.invalidReturnResponse(request), '*');
+						} else {
+							messages.push('internal error');
+							messages.push('post internal error failure');
+							this.post(targetWindow, this.internalErrorResponse(request), '*');
+						}
+					} catch(error) {
+						messages.push('error: ' + JSON.stringify(error));
+						messages.push('post try failure');
+						this.post(targetWindow, this.failure(error, request.id), '*');
 					}
 				}
-
 			}
-		// }
-		this.log(messages);
+			this.log(messages);
+		}
+	}
 
+	/**
+	 * Handle postMessage events for parent window
+	 * @param {Object} event
+	 * @return {Undefined}
+	*/
+	messageHandler(event) {
+		// console.log('server message', event.data);
+		if (this._running) {
+			if (event.origin === 'null' || event.origin === this._origin) {
+				if (event.source && event.source !== window) {
+					this.request(event.data, event.source);
+				}
+			}
+		}
 	}
 
 	/**
@@ -419,9 +568,11 @@ export default class PostRPCServer {
 	 * @param {String} color
 	 * @return {Undefined}
 	*/
+ 	/* istanbul ignore next */
 	log(messages, color = 'blue') {
 		if (this._logging) {
 			console.group(this._name);
+
 			for (var i = 0; i < messages.length; i++) {
 				console.log('%c%s', 'color:' + color, messages[i]);
 			}
@@ -430,9 +581,30 @@ export default class PostRPCServer {
 	}
 
 	/**
+	 * Log group messages to console
+	 * @param {Array[String]} messages
+	 * @param {String} color
+	 * @return {Undefined}
+	*/
+ 	/* istanbul ignore next */
+	logGroup(group, messages, color = 'blue') {
+		if (this._logging) {
+			console.group(this._name);
+			console.groupCollapsed(group);
+
+			for (var i = 0; i < messages.length; i++) {
+				console.log('%c%s', 'color:' + color, messages[i]);
+			}
+			console.groupEnd();
+			console.groupEnd();
+		}
+	}
+
+	/**
 	 * Log all registered RPC's
 	 * @return {Array[Object]} rpcs
 	 */
+ 	/* istanbul ignore next */
 	logRegistered(color = 'blue') {
 		if (this._logging) {
 			console.group(this._name);

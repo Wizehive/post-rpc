@@ -32,29 +32,30 @@ module.exports = function(grunt) {
                     'node_modules/sinon-chai/lib/sinon-chai.js',
                     'node_modules/sinon/pkg/sinon.js',
 
+                    'test/fixtures.js',
+                    'test/karma.js',
                     'test/polyfills.js',
+                    'test/helpers.js',
 
                     // In our case, the test and src files are the
                     // same for the dev and prod targets so we can include
                     // them in the global files option here
-                    //'js/calculator.js',
-                    //'test/calculator-test.js',
                     'lib/PostRPC.Client.js',
                     'lib/PostRPC.Server.js',
                     'test/server.spec.js',
                     'test/client.spec.js',
 
-
                     // html2js preprocessor takes this file and coverts it
                     // to a string in our JS when the tests run.
-                    'test/server.html',
-                    'test/client.html'
+                    'test/karma.html'
                 ]
+
             },
 
             dev: {
                 // On our local environment we want to test all the things!
-                browsers: ['Chrome', 'Firefox', 'PhantomJS']
+                //browsers: ['Chrome', 'Firefox', 'PhantomJS']
+                browsers: ['Chrome']
             },
 
             // For production, that is to say, our CI environment, we'll
