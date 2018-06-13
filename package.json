@@ -4,21 +4,21 @@
   "description": "PostRPC - JSON RPC over PostMessage",
   "scripts": {
     "build": "webpack && webpack --mode=build",
-    "example": "webpack-dev-server --content-base example/ --host localhost --port 5001 --colors --watch",
+    "clean": "rm -f lib/*",
+    "example": "webpack-dev-server --content-base example/ --host localhost --port 5005 --colors --watch",
     "blanket": "webpack-dev-server --host localhost --port 6001 --colors --watch",
     "test": "webpack && grunt karma:dev"
   },
   "dependencies": {
-    "native-promise-only": ""
+    "native-promise-only": "^0.8.1"
   },
   "devDependencies": {
-    "babel": "^6.5.2",
     "babel-core": "^6.22.1",
-    "babel-cli":"^6.22.2",
+    "babel-cli": "^6.22.2",
     "babel-eslint": "^7.1.1",
     "babel-loader": "^6.2.10",
     "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-preset-es2015": "^6.22.0",
+    "babel-preset-env": "^1.7.0",
     "blanket": "^1.2.3",
     "chai": "^3.4.1",
     "eslint": "^3.14.1",
@@ -41,16 +41,13 @@
     "webpack": "^1.14.0",
     "webpack-dev-server": "^1.16.3",
     "yargs": "^4.8.1"
-
-
-
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/wizehive/post-rpc.git"
   },
   "keywords": [
-  	"call",
+    "call",
     "json",
     "rpc",
     "postmessage",
