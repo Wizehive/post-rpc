@@ -162,9 +162,6 @@ export default class PostRPCClient {
 	 * @return {Undefined}
 	*/
 	start() {
-		// if (ENV.logging) {
-		//     console.log('Yo!');
-		// }
 		if (this._timer === undefined) {
 			this._timer = window.setInterval(() => this.timeoutHandler(), 250);
 		}

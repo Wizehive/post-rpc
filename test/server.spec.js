@@ -47,7 +47,7 @@ describe('PostRPC.Server', function() {
 		client = findClient();
 		serverWindow = findServerWindow();
 		clientWindow = findClientWindow();
-
+logFixture();
 	  	if (server.window === client.window) {
 	  		throw new Error('server.window and client.window can\'t be same window');
 	  	}
