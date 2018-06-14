@@ -1,4 +1,11 @@
 {
   "presets": ["env"],
-  "plugins": ["babel-plugin-add-module-exports"]
+  "plugins": [
+		["conditional-compile", {
+			"define": {
+				"TARGET": "dev"
+			}
+		}],
+  	"babel-plugin-add-module-exports",
+  ]
 }
