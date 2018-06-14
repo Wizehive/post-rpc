@@ -1,56 +1,57 @@
-var webpack = require('webpack');
-var UglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
-var path = require('path');
-var env = require('yargs').argv.mode;
+/* global __dirname, require, module*/
+
+const webpack = require('webpack');
+const UglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
+const path = require('path');
+const env = require('yargs').argv.env; // use --env with webpack 2
 
 var libraryName = 'PostRPC';
 
-var plugins = [], outputSuffix;
+let outputFile;
 
 if (env === 'build') {
-  plugins.push(new UglifyJsPlugin({
-  	minimize: true,
-  	mangle: {
-  		except: ['$super', '$', 'exports', 'require']
-  	}
-  }));
-  outputSuffix = '.min.js';
+  plugins.push(new UglifyJsPlugin({ minimize: true }));
+  outputFile = libraryName + '.min.js';
 } else {
-  outputSuffix = '.js';
+  outputFile = libraryName + '.js';
 }
 
-var config = {
+const config = {
 	entry: {
 		Client: __dirname + "/src/client.js",
 		Server: __dirname + "/src/server.js"
 	},
-	devtool: 'source-map',
-	output: {
+  devtool: 'source-map',
+  output: {
 		path: path.join(__dirname, "/lib"),
-        filename: libraryName + ".[name]" + outputSuffix,
-        library: [libraryName, "[name]"],
-	   	libraryTarget: 'umd',
-    	umdNamedDefine: true
-	},
+		filename: libraryName + ".[name].js",
+		library: [libraryName, "[name]"],
+		libraryTarget: 'umd',
+		umdNamedDefine: true
+  },
   module: {
-    loaders: [
+    rules: [
       {
         test: /(\.jsx|\.js)$/,
-        loader: 'babel',
+        loader: 'babel-loader',
         exclude: /(node_modules|bower_components)/
       },
       {
         test: /(\.jsx|\.js)$/,
-        loader: "eslint-loader",
+        loader: 'eslint-loader',
         exclude: /node_modules/
       }
     ]
   },
   resolve: {
-    root: path.resolve('./src'),
-    extensions: ['', '.js']
+    modules: [path.resolve('./node_modules'), path.resolve('./src')],
+    extensions: ['.json', '.js']
   },
-  plugins: plugins
+	plugins: [
+		// new webpack.DefinePlugin({
+		// 	ENV: require(path.join(__dirname, './env/', env))
+		// })
+	]
 };
 
 module.exports = config;
