@@ -114,7 +114,7 @@ describe('PostRPC.Client', function() {
 			addEventListenerSpy = sinon.spy(clientWindow, 'addEventListener');
 		});
 
-		it('should add event listener on message for window', function() {
+		xit('should add event listener on message for window', function() {
 			client.start();
 
 			expect(addEventListenerSpy.callCount).equal(1);
@@ -137,7 +137,7 @@ describe('PostRPC.Client', function() {
 			client.stop();
 		});
 
-		it('should remove event listener on message for window', function() {
+		xit('should remove event listener on message for window', function() {
 			expect(removeEventListenerSpy.callCount).equal(1);
 			expect(removeEventListenerSpy.args[0][0]).equal('message');
 		});
@@ -204,7 +204,7 @@ describe('PostRPC.Client', function() {
 			client.start();
 		});
 
-		it('should return result with callback', function(done) {
+		xit('should return result with callback', function(done) {
 			var f = function(a, b) {
 				return {c: 101, d: 202};
 			};
@@ -226,7 +226,7 @@ describe('PostRPC.Client', function() {
 			expect(client.call('f', {a: 2, b: -18}, cb)).to.equal(null);
 		});
 
-		it('should return error with callback', function(done) {
+		xit('should return error with callback', function(done) {
 			var f = function(a, b) {
 				throw new Error('Something went wrong');
 			};
@@ -249,7 +249,7 @@ describe('PostRPC.Client', function() {
 			expect(client.call('f', {a: 2, b: -18}, cb)).to.equal(null);
 		});
 
-		it('should return result with promise', function() {
+		xit('should return result with promise', function() {
 			var f = function(a, b) {
 				return {c: 101, d: 202};
 			};
@@ -269,7 +269,7 @@ describe('PostRPC.Client', function() {
 		    });
 		});
 
-		it('should return error with promise', function() {
+		xit('should return error with promise', function() {
 			var f = function(a, b) {
 				throw new Error('Something went wrong');
 			};

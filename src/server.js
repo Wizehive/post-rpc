@@ -134,14 +134,16 @@ export default class PostRPCServer {
 	 * @return {Boolean}
 	*/
 	register(method, params, ret, func, desc) {
-		this.logGroup('register', [
-			'method: ' + method,
-			'params: ' + JSON.stringify(params),
-			'return: ' + JSON.stringify(ret),
-			'function: function() {}',
-			'description: ' + desc
+		if (TARGET === 'dev') {
+			this.logGroup('register', [
+				'method: ' + method,
+				'params: ' + JSON.stringify(params),
+				'return: ' + JSON.stringify(ret),
+				'function: function() {}',
+				'description: ' + desc
 
 		]);
+		}
 		this._registered[method] = {
 			params: params,
 			return: ret,
@@ -387,7 +389,10 @@ export default class PostRPCServer {
 	*/
 	publish(name, result) {
 		if (this._running) {
-			var messages = ['publish: name: ' + name + ', result: ' + JSON.stringify(result)];
+			var messages = [];
+			if (TARGET === 'dev') {
+				messages = ['publish: name: ' + name + ', result: ' + JSON.stringify(result)];
+			}
 
 			for (var i = 0; i < window.frames.length; i++) {
 				var frame = window.frames[i];
@@ -395,8 +400,10 @@ export default class PostRPCServer {
 				this.post(frame, this.event(result, name), '*');
 
 			}
-			messages.push('(' + window.frames.length + ') post publish');
-			this.log(messages);
+			if (TARGET === 'dev') {
+				messages.push('(' + window.frames.length + ') post publish');
+				this.log(messages);
+			}
 		} else {
 			throw new Error('Server is not running');
 		}
@@ -457,7 +464,6 @@ export default class PostRPCServer {
 	 * @return {Undefined}
 	*/
 	post(targetWindow, message, targetOrigin) {
-		// console.log('server post', message);
 		if (this._running && targetWindow) {
 			targetWindow.postMessage(message, targetOrigin);
 		}
@@ -472,67 +478,94 @@ export default class PostRPCServer {
 	request(request, targetWindow) {
 
 		if (this._running) {
-			var messages = ['request: ' + JSON.stringify(request)];
+			var messages = [];
+			if (TARGET === 'dev') {
+				messages = ['request: ' + JSON.stringify(request)];
+			}
 
 			if (!this.isValid(request)) {
-				messages.push('post invalid');
+				if (TARGET === 'dev') {
+					messages.push('post invalid');
+				}
 				this.post(targetWindow, this.invalidRequestResponse(request), '*');
 			} else if (!this.isMethodFound(request)) {
-				messages.push('post method not found');
+				if (TARGET === 'dev') {
+					messages.push('post method not found');
+				}
 				this.post(targetWindow, this.methodNotFoundResponse(request), '*');
 			} else {
 				var rpc = this._registered[request.method];
 				var func = rpc.function;
 				var args = this.mapParams(request.params, rpc.params);
 				if (args.length !== rpc.params.length) {
-					messages.push('post invalid params');
+					if (TARGET === 'dev') {
+						messages.push('post invalid params');
+					}
 					this.post(targetWindow, this.invalidParamsResponse(request), '*');
 				} else {
-					messages.push('call: ' + request.method + '(' + args.join(', ') + ')');
+					if (TARGET === 'dev') {
+						messages.push('call: ' + request.method + '(' + args.join(', ') + ')');
+					}
 					try {
 						var result = func(...args);
 
 						if (typeof result === 'object' && typeof result.then === 'function') {
-							messages.push('func result is a promise');
+							if (TARGET === 'dev') {
+								messages.push('func result is a promise');
+							}
 							var self = this;
 							result
 							.then(function (res) {
-								self.log([
-									'return: ' + JSON.stringify(res),
-									'post promise success'
-								]);
+								if (TARGET === 'dev') {
+									self.log([
+										'return: ' + JSON.stringify(res),
+										'post promise success'
+									]);
+								}
 								self.post(targetWindow, self.success(res, request.id), '*');
 							})
 							.catch(function (err) {
-								self.log([
-									'return: ' + JSON.stringify(err),
-									'post promise failure'
-								]);
+								if (TARGET === 'dev') {
+									self.log([
+										'return: ' + JSON.stringify(err),
+										'post promise failure'
+									]);
+								}
 								self.post(targetWindow, self.failure(err, request.id), '*');
 						    });
 						} else if (allowable.indexOf(typeof result) >= 0) {
-							messages.push('func result is allowable type');
-							messages.push('return: ' + JSON.stringify(result));
-							messages.push('post allowable success');
+							if (TARGET === 'dev') {
+								messages.push('func result is allowable type');
+								messages.push('return: ' + JSON.stringify(result));
+								messages.push('post allowable success');
+							}
 							this.post(targetWindow, this.success(result, request.id), '*');
 						} else if (allowable.indexOf(typeof result) < 0) {
-							messages.push('func result is NOT allowable type');
-							messages.push('type: ' + typeof result);
-							messages.push('post invalid return');
+							if (TARGET === 'dev') {
+								messages.push('func result is NOT allowable type');
+								messages.push('type: ' + typeof result);
+								messages.push('post invalid return');
+								}
 							this.post(targetWindow, this.invalidReturnResponse(request), '*');
 						} else {
-							messages.push('internal error');
-							messages.push('post internal error failure');
+							if (TARGET === 'dev') {
+								messages.push('internal error');
+								messages.push('post internal error failure');
+								}
 							this.post(targetWindow, this.internalErrorResponse(request), '*');
 						}
 					} catch(error) {
-						messages.push('error: ' + JSON.stringify(error));
-						messages.push('post try failure');
+						if (TARGET === 'dev') {
+							messages.push('error: ' + JSON.stringify(error));
+							messages.push('post try failure');
+						}
 						this.post(targetWindow, this.failure(error, request.id), '*');
 					}
 				}
 			}
-			this.log(messages);
+			if (TARGET === 'dev') {
+				this.log(messages);
+			}
 		}
 	}
 
@@ -542,7 +575,6 @@ export default class PostRPCServer {
 	 * @return {Undefined}
 	*/
 	messageHandler(event) {
-		// console.log('server message', event.data);
 		if (this._running) {
 			if (event.origin === 'null' || event.origin === this._origin) {
 				if (event.source && event.source !== window) {
@@ -570,13 +602,15 @@ export default class PostRPCServer {
 	*/
  	/* istanbul ignore next */
 	log(messages, color = 'blue') {
-		if (this._logging) {
-			console.group(this._name);
+		if (TARGET === 'dev') {
+			if (this._logging) {
+				console.group(this._name);
 
-			for (var i = 0; i < messages.length; i++) {
-				console.log('%c%s', 'color:' + color, messages[i]);
+				for (var i = 0; i < messages.length; i++) {
+					console.log('%c%s', 'color:' + color, messages[i]);
+				}
+				console.groupEnd();
 			}
-			console.groupEnd();
 		}
 	}
 
@@ -588,15 +622,17 @@ export default class PostRPCServer {
 	*/
  	/* istanbul ignore next */
 	logGroup(group, messages, color = 'blue') {
-		if (this._logging) {
-			console.group(this._name);
-			console.groupCollapsed(group);
+		if (TARGET === 'dev') {
+			if (this._logging) {
+				console.group(this._name);
+				console.groupCollapsed(group);
 
-			for (var i = 0; i < messages.length; i++) {
-				console.log('%c%s', 'color:' + color, messages[i]);
+				for (var i = 0; i < messages.length; i++) {
+					console.log('%c%s', 'color:' + color, messages[i]);
+				}
+				console.groupEnd();
+				console.groupEnd();
 			}
-			console.groupEnd();
-			console.groupEnd();
 		}
 	}
 
@@ -606,64 +642,66 @@ export default class PostRPCServer {
 	 */
  	/* istanbul ignore next */
 	logRegistered(color = 'blue') {
-		if (this._logging) {
-			console.group(this._name);
-			console.group('registered');
+		if (TARGET === 'dev') {
+			if (this._logging) {
+				console.group(this._name);
+				console.group('registered');
 
-			var self = this;
-			var arr = Object.keys(self._registered).map(function (key) {
-				return [key, self._registered[key]];
-			});
-			var sorted = arr.sort(function (a, b) {
-				if (a[0] < b[0]) {
-					return -1;
+				var self = this;
+				var arr = Object.keys(self._registered).map(function (key) {
+					return [key, self._registered[key]];
+				});
+				var sorted = arr.sort(function (a, b) {
+					if (a[0] < b[0]) {
+						return -1;
+					}
+					if (a[0] > b[0]) {
+						return 1;
+					}
+					return 0;
+				});
+				for (var i = 0; i < sorted.length; i++) {
+
+					var messages = [];
+					var method = sorted[i][0];
+					var r = sorted[i][1];
+					var params = [];
+					var params2 = [];
+
+					messages.push('/**');
+					messages.push(' * ' + r.description);
+					var types = {
+						'Boolean': 'true',
+						'Null': 'null',
+						'Undefined': 'undefined',
+						'Number': '1',
+						'String': 'str',
+						'Object': '{a: 1}',
+						'Array': '[1,2]'
+					};
+
+					for (var j = 0; j < r.params.length; j++) {
+						var p = r.params[j];
+						messages.push(' * @param {' + p[1] + '} ' + p[0]);
+						params.push(p[0]);
+						params2.push(p[0] + ': ' + types[p[1]]);
+					}
+
+					messages.push(' * @return {' + r.return + '}');
+					messages.push(' */');
+					messages.push(method + '(' + params.join(', ') + ')');
+					messages.push('client.call(\'' + method + '\', {' + params2.join(', ') + '}, func)');
+
+					console.groupCollapsed(method);
+					for (var k = 0; k < messages.length; k++) {
+						console.log('%c%s', 'color:' + color, messages[k]);
+					}
+					console.groupEnd();
 				}
-				if (a[0] > b[0]) {
-					return 1;
-				}
-				return 0;
-			});
-			for (var i = 0; i < sorted.length; i++) {
 
-				var messages = [];
-				var method = sorted[i][0];
-				var r = sorted[i][1];
-				var params = [];
-				var params2 = [];
-
-				messages.push('/**');
-				messages.push(' * ' + r.description);
-				var types = {
-					'Boolean': 'true',
-					'Null': 'null',
-					'Undefined': 'undefined',
-					'Number': '1',
-					'String': 'str',
-					'Object': '{a: 1}',
-					'Array': '[1,2]'
-				};
-
-				for (var j = 0; j < r.params.length; j++) {
-					var p = r.params[j];
-					messages.push(' * @param {' + p[1] + '} ' + p[0]);
-					params.push(p[0]);
-					params2.push(p[0] + ': ' + types[p[1]]);
-				}
-
-				messages.push(' * @return {' + r.return + '}');
-				messages.push(' */');
-				messages.push(method + '(' + params.join(', ') + ')');
-				messages.push('client.call(\'' + method + '\', {' + params2.join(', ') + '}, func)');
-
-				console.groupCollapsed(method);
-				for (var k = 0; k < messages.length; k++) {
-					console.log('%c%s', 'color:' + color, messages[k]);
-				}
+				console.groupEnd();
 				console.groupEnd();
 			}
-
-			console.groupEnd();
-			console.groupEnd();
 		}
 	}
 

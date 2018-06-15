@@ -95,7 +95,7 @@
 
 			console.log("App: DOM loaded and parsed");
 
-			var server = new window.PostRPC.Server('http://localhost:5001');
+			var server = new window.PostRPC.Server('http://localhost:5005');
 			server.logging(true);
 
 			server.register('add',[['a', 'Number'], ['b', 'Number']], 'Number', add, 'Calculate the sum of two numbers');

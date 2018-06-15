@@ -1,56 +1,55 @@
-var webpack = require('webpack');
-var UglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
-var path = require('path');
-var env = require('yargs').argv.mode;
+/* global __dirname, require, module*/
 
-var libraryName = 'PostRPC';
+const webpack = require('webpack')
+const UglifyJsPlugin = webpack.optimize.UglifyJsPlugin
+const path = require('path')
+const env = require('yargs').argv.env // use --env with webpack 2
 
-var plugins = [], outputSuffix;
+var libraryName = 'PostRPC'
 
-if (env === 'build') {
-  plugins.push(new UglifyJsPlugin({
-  	minimize: true,
-  	mangle: {
-  		except: ['$super', '$', 'exports', 'require']
-  	}
-  }));
-  outputSuffix = '.min.js';
-} else {
-  outputSuffix = '.js';
+let suffix
+let plugins = []
+
+module.exports = function(env) {
+	env = env || 'dev'
+	if (env === 'prod') {
+	  plugins.push(new UglifyJsPlugin({ minimize: true }))
+	  suffix = '.min.js'
+	} else {
+	  suffix = '.js'
+	}
+
+  return {
+		entry: {
+			Client: __dirname + "/src/client.js",
+			Server: __dirname + "/src/server.js"
+		},
+	  devtool: 'source-map',
+	  output: {
+			path: path.join(__dirname, "/lib"),
+			filename: libraryName + ".[name]"+suffix,
+			library: [libraryName, "[name]"],
+			libraryTarget: 'umd',
+			umdNamedDefine: true
+	  },
+	  module: {
+	    rules: [
+	      {
+	        test: /(\.jsx|\.js)$/,
+	        loader: 'babel-loader',
+	        exclude: /(node_modules|bower_components)/
+	      },
+	      {
+	        test: /(\.jsx|\.js)$/,
+	        loader: 'eslint-loader',
+	        exclude: /node_modules/
+	      }
+	    ]
+	  },
+	  resolve: {
+	    modules: [path.resolve('./node_modules'), path.resolve('./src')],
+	    extensions: ['.json', '.js']
+	  },
+		plugins: plugins
+	}
 }
-
-var config = {
-	entry: {
-		Client: __dirname + "/src/client.js",
-		Server: __dirname + "/src/server.js"
-	},
-	devtool: 'source-map',
-	output: {
-		path: path.join(__dirname, "/lib"),
-        filename: libraryName + ".[name]" + outputSuffix,
-        library: [libraryName, "[name]"],
-	   	libraryTarget: 'umd',
-    	umdNamedDefine: true
-	},
-  module: {
-    loaders: [
-      {
-        test: /(\.jsx|\.js)$/,
-        loader: 'babel',
-        exclude: /(node_modules|bower_components)/
-      },
-      {
-        test: /(\.jsx|\.js)$/,
-        loader: "eslint-loader",
-        exclude: /node_modules/
-      }
-    ]
-  },
-  resolve: {
-    root: path.resolve('./src'),
-    extensions: ['', '.js']
-  },
-  plugins: plugins
-};
-
-module.exports = config;
