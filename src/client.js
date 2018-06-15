@@ -103,7 +103,7 @@ export default class PostRPCClient {
 	 * @return {Window}
 	 */
 	get parent() {
-		return window.parent;
+		return window.opener || window.parent;
 	}
 
 	/**
@@ -278,7 +278,7 @@ export default class PostRPCClient {
 			resolve: resolve,
 			reject: reject
 		});
-		this.post(window.parent, this.request(method, params, this.id), this._origin);
+		this.post(this.parent, this.request(method, params, this.id), this._origin);
 		this.nextID();
 		return promise;
 	}
