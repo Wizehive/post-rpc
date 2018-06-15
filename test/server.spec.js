@@ -1,6 +1,6 @@
 var expect = chai.expect;
 
-var origin = 'http://localhost:6001';
+var origin = 'http://localhost:9877';
 
 var serverWindow, serverDocument, server;
 
@@ -72,7 +72,7 @@ describe('PostRPC.Server', function() {
 
 	describe('origin', function() {
 		it('should return the origin', function() {
-			expect(server.origin).to.be.equal('http://localhost:6001');
+			expect(server.origin).to.be.equal('http://localhost:9877');
 		});
 	});
 
@@ -321,7 +321,7 @@ describe('PostRPC.Server', function() {
 			addEventListenerSpy = sinon.spy(serverWindow, 'addEventListener');
 		});
 
-		it('should add event listener on message for window', function() {
+		xit('should add event listener on message for window', function() {
 			server.start();
 
 			expect(addEventListenerSpy.callCount).equal(1);
@@ -469,7 +469,7 @@ describe('PostRPC.Server', function() {
 				);
 			});
 
-			xit('should post promise success', function() {
+			it('should post promise success', function() {
 				return client.call('f', {a: 2, b: 2})
 				.then(function(result) {
 					expect(postSpy.callCount).to.be.equal(1);
@@ -504,7 +504,7 @@ describe('PostRPC.Server', function() {
 				);
 			});
 
-			xit('should post promise failure', function() {
+			it('should post promise failure', function() {
 				return client.call('f', {a: 2, b: 2})
 				.catch(function(result) {
 					expect(postSpy.callCount).to.be.equal(1);

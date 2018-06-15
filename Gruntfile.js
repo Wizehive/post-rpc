@@ -40,8 +40,8 @@ module.exports = function(grunt) {
                     // In our case, the test and src files are the
                     // same for the dev and prod targets so we can include
                     // them in the global files option here
-                    'lib/PostRPC.Client.js',
-                    'lib/PostRPC.Server.js',
+                    'lib/PostRPC.Client.min.js',
+                    'lib/PostRPC.Server.min.js',
                     'test/server.spec.js',
                     'test/client.spec.js',
 

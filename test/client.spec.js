@@ -1,6 +1,6 @@
 var expect = chai.expect;
 
-var origin = 'http://localhost:6001';
+var origin = 'http://localhost:9877';
 
 var serverWindow, serverDocument, server;
 
@@ -56,7 +56,7 @@ describe('PostRPC.Client', function() {
 
 	describe('origin', function() {
 		it('should return the origin', function() {
-			expect(client.origin).to.be.equal('http://localhost:6001');
+			expect(client.origin).to.be.equal('http://localhost:9877');
 		});
 	});
 
@@ -204,7 +204,7 @@ describe('PostRPC.Client', function() {
 			client.start();
 		});
 
-		xit('should return result with callback', function(done) {
+		it('should return result with callback', function(done) {
 			var f = function(a, b) {
 				return {c: 101, d: 202};
 			};
@@ -226,7 +226,7 @@ describe('PostRPC.Client', function() {
 			expect(client.call('f', {a: 2, b: -18}, cb)).to.equal(null);
 		});
 
-		xit('should return error with callback', function(done) {
+		it('should return error with callback', function(done) {
 			var f = function(a, b) {
 				throw new Error('Something went wrong');
 			};
@@ -249,7 +249,7 @@ describe('PostRPC.Client', function() {
 			expect(client.call('f', {a: 2, b: -18}, cb)).to.equal(null);
 		});
 
-		xit('should return result with promise', function() {
+		it('should return result with promise', function() {
 			var f = function(a, b) {
 				return {c: 101, d: 202};
 			};
@@ -269,7 +269,7 @@ describe('PostRPC.Client', function() {
 		    });
 		});
 
-		xit('should return error with promise', function() {
+		it('should return error with promise', function() {
 			var f = function(a, b) {
 				throw new Error('Something went wrong');
 			};

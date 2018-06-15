@@ -1,1 +1,1 @@
-createFixture('http://localhost:6001', '/base/lib');
+createFixture('http://localhost:9877', '/base/lib');

@@ -254,7 +254,7 @@ export default class PostRPCClient {
 				'params: ' + JSON.stringify(params),
 				'timeout: ' + timeout,
 				'callback: function() {}'
-		]);
+			]);
 		}
 
 		var promise = null;
