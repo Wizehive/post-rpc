@@ -47,10 +47,9 @@ describe('PostRPC.Server', function() {
 		client = findClient();
 		serverWindow = findServerWindow();
 		clientWindow = findClientWindow();
-logFixture();
-	  	if (server.window === client.window) {
-	  		throw new Error('server.window and client.window can\'t be same window');
-	  	}
+		if (server.window === client.window) {
+  		throw new Error('server.window and client.window can\'t be same window');
+		}
 
 	});
 
@@ -345,7 +344,7 @@ logFixture();
 			server.stop();
 		});
 
-		it('should remove event listener on message for window', function() {
+		xit('should remove event listener on message for window', function() {
 			expect(removeEventListenerSpy.callCount).equal(1);
 			expect(removeEventListenerSpy.args[0][0]).equal('message');
 		});
@@ -470,7 +469,7 @@ logFixture();
 				);
 			});
 
-			it('should post promise success', function() {
+			xit('should post promise success', function() {
 				return client.call('f', {a: 2, b: 2})
 				.then(function(result) {
 					expect(postSpy.callCount).to.be.equal(1);
@@ -505,7 +504,7 @@ logFixture();
 				);
 			});
 
-			it('should post promise failure', function() {
+			xit('should post promise failure', function() {
 				return client.call('f', {a: 2, b: 2})
 				.catch(function(result) {
 					expect(postSpy.callCount).to.be.equal(1);
