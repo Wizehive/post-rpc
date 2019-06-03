@@ -261,12 +261,10 @@ export default class PostRPCClient {
 		var resolve = null;
 		var reject = null;
 
-		if (callback === null) {
-			promise = new Promise(function (res, rej) {
-				resolve = res;
-				reject = rej;
-			});
-		}
+        promise = new Promise(function (res, rej) {
+            resolve = res;
+            reject = rej;
+        });
 
 		this._queue.push({
 			method: method,
@@ -362,12 +360,13 @@ export default class PostRPCClient {
 						result = response.hasOwnProperty('result') ? response.result : null;
 						error = response.hasOwnProperty('error') ? response.error : null;
 						if (call.callback !== null) {
-							if (TARGET === 'dev') {
-								messages.push('called, call callback');
-							}
-							call.callback(result, error);
-							this._queue.splice(i, 1);
-						} else if (call.resolve !== null || call.reject !== null) {
+                            if (TARGET === 'dev') {
+                                messages.push('called, call callback');
+                            }
+                            call.callback(result, error);
+                            this._queue.splice(i, 1);
+                        }
+						if (call.resolve !== null || call.reject !== null) {
 							if (TARGET === 'dev') {
 								messages.push('called, resolve/reject promise');
 							}

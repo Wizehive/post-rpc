@@ -309,15 +309,22 @@ export default class PostRPCServer {
 	 * @return {Object} response
 	*/
 	failure(error, id) {
+		if (TARGET === 'dev') {
+			this.logGroup('error', [
+				'error: ' + JSON.stringify(error),
+				'id: ' + id
+			]);
+		}
 		if (error instanceof Error) {
+			let errorData = {};
+			console.log(Object.getOwnPropertyNames(error).forEach((key) => {
+				errorData[key] = error[key];
+				console.log({'key': key, 'value': error[key]});
+			}));
 			return {
+				id: id,
 				jsonrpc: jsonrpc,
-				error: {
-					code: errorCode,
-					message: error.name,
-					data: error.message
-				},
-				id: id
+				error: errorData
 			};
 		} else if (typeof error === 'object') {
 			var message, data;
