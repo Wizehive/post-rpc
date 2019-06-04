@@ -316,11 +316,15 @@ export default class PostRPCServer {
 			]);
 		}
 		if (error instanceof Error) {
-			let errorData = {};
-			console.log(Object.getOwnPropertyNames(error).forEach((key) => {
-				errorData[key] = error[key];
-				console.log({'key': key, 'value': error[key]});
-			}));
+			let errorData;
+			if (TARGET === 'dev') {
+				errorData = {};
+				Object.getOwnPropertyNames(error).forEach((key) => {
+					errorData[key] = error[key];
+				});
+			} else {
+				errorData = error.message;
+			}
 			return {
 				id: id,
 				jsonrpc: jsonrpc,

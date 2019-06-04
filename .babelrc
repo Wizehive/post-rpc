@@ -6,6 +6,6 @@
 				"TARGET": "dev"
 			}
 		}],
-  	"babel-plugin-add-module-exports",
+  	"babel-plugin-add-module-exports"
   ]
 }
