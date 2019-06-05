@@ -118,9 +118,7 @@ client.call('subtract', {a: 11, b: -8})
 .catch(function(error) {
 	display('subtract 11 - -8', null, error);
 });
-```
-
-The *call* function returns a promise when no callback funtion is passed. 
+``` 
 
 ### Subscribing to Notifications
 

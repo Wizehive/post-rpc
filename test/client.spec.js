@@ -223,7 +223,6 @@ describe('PostRPC.Client', function() {
 				f,
 				'F(a, b)'
 			);
-			expect(client.call('f', {a: 2, b: -18}, cb)).to.equal(null);
 		});
 
 		it('should return error with callback', function(done) {
