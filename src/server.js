@@ -519,8 +519,7 @@ export default class PostRPCServer {
 					}
 					try {
 						var result = func(...args);
-
-						if (typeof result === 'object' && typeof result.then === 'function') {
+						if (result !== null && typeof result === 'object' && typeof result.then === 'function') {
 							if (TARGET === 'dev') {
 								messages.push('func result is a promise');
 							}
