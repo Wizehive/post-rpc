@@ -241,7 +241,7 @@ export default class PostRPCClient {
 	 * @param {Object|Array} params
 	 * @param {Function} callback to return response
 	 * @param {Number} timeout in MS to await response
-	 * @return {Undefined}r
+	 * @return {Undefined}
 	*/
 	call(method, params, callback = null, timeout = 5000) {
 		if (!this._running) {
@@ -261,12 +261,10 @@ export default class PostRPCClient {
 		var resolve = null;
 		var reject = null;
 
-		// if (callback === null) {
-			promise = new Promise(function (res, rej) {
-				resolve = res;
-				reject = rej;
-			});
-		// }
+		promise = new Promise(function (res, rej) {
+			resolve = res;
+			reject = rej;
+		});
 
 		this._queue.push({
 			method: method,
