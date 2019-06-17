@@ -309,15 +309,26 @@ export default class PostRPCServer {
 	 * @return {Object} response
 	*/
 	failure(error, id) {
+		if (TARGET === 'dev') {
+			this.logGroup('error', [
+				'error: ' + JSON.stringify(error),
+				'id: ' + id
+			]);
+		}
 		if (error instanceof Error) {
+			let errorData;
+			if (TARGET === 'dev') {
+				errorData = {};
+				Object.getOwnPropertyNames(error).forEach((key) => {
+					errorData[key] = error[key];
+				});
+			} else {
+				errorData = error.message;
+			}
 			return {
+				id: id,
 				jsonrpc: jsonrpc,
-				error: {
-					code: errorCode,
-					message: error.name,
-					data: error.message
-				},
-				id: id
+				error: errorData
 			};
 		} else if (typeof error === 'object') {
 			var message, data;
@@ -508,8 +519,7 @@ export default class PostRPCServer {
 					}
 					try {
 						var result = func(...args);
-
-						if (typeof result === 'object' && typeof result.then === 'function') {
+						if (result !== null && typeof result === 'object' && typeof result.then === 'function') {
 							if (TARGET === 'dev') {
 								messages.push('func result is a promise');
 							}

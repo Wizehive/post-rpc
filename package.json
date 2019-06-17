@@ -1,6 +1,6 @@
 {
   "name": "post-rpc",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "PostRPC - JSON RPC over PostMessage",
   "scripts": {
     "help": "webpack --help",

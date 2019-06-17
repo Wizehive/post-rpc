@@ -253,7 +253,7 @@ export default class PostRPCClient {
 				'method: ' + method,
 				'params: ' + JSON.stringify(params),
 				'timeout: ' + timeout,
-				'callback: function() {}'
+				'callback: ' + callback
 			]);
 		}
 
@@ -261,12 +261,10 @@ export default class PostRPCClient {
 		var resolve = null;
 		var reject = null;
 
-		if (callback === null) {
-			promise = new Promise(function (res, rej) {
-				resolve = res;
-				reject = rej;
-			});
-		}
+		promise = new Promise(function (res, rej) {
+			resolve = res;
+			reject = rej;
+		});
 
 		this._queue.push({
 			method: method,
@@ -362,21 +360,20 @@ export default class PostRPCClient {
 						result = response.hasOwnProperty('result') ? response.result : null;
 						error = response.hasOwnProperty('error') ? response.error : null;
 						if (call.callback !== null) {
-							if (TARGET === 'dev') {
-								messages.push('called, call callback');
-							}
-							call.callback(result, error);
-							this._queue.splice(i, 1);
-						} else if (call.resolve !== null || call.reject !== null) {
+                            if (TARGET === 'dev') {
+                                messages.push('called, call callback');
+                            }
+                            call.callback(result, error);
+                            this._queue.splice(i, 1);
+                        }
+						if (call.resolve !== null || call.reject !== null) {
 							if (TARGET === 'dev') {
 								messages.push('called, resolve/reject promise');
 							}
 							if (error) {
 								call.reject(error);
-							} else if (result) {
-								call.resolve(result);
 							} else {
-								call.reject(this.internalErrorResponse()['error']);
+								call.resolve(result);
 							}
 							this._queue.splice(i, 1);
 						}

@@ -7,3 +7,4 @@ example/post-rpc/app/js/
 example/post-rpc/plugin/js/
 test/coverage/
 .DS_Store
+.idea/
