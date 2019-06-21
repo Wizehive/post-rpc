@@ -1,0 +1,92 @@
+---
+# Top level array of services
+- description: Person service
+  object: person # optional, functions as members of object
+  functions: # Array of funtions
+  - function: create # Function name
+    args: # Array of arguments for function
+    - arg: first # Argument name
+      type: Number # Argument type
+    - arg: last # Argument name
+      type: Number # Argument type
+    return: Number # Return type
+    description: Create person # Function description
+  - function: update
+    args:
+    - arg: first
+      type: Number
+    - arg: last
+      type: Number
+    return: Number
+    description: Update person
+  - function: delete
+    args:
+    return: Number
+    description: Delete person
+- description: Math service
+  object:
+  functions:
+  - function: add
+    args:
+    - arg: a
+      type: Number
+    - arg: b
+      type: Number
+    return: Number
+    description: Calculate the sum of two numbers
+  - function: subtract
+    args:
+    - arg: a
+      type: Number
+    - arg: b
+      type: Number
+    return: Number
+    description: Calculate the difference between two numbers
+  - function: multiply
+    args:
+    - arg: a
+      type: Number
+    - arg: b
+      type: Number
+    return: Number
+    description: Calculate the product of two numbers
+  - function: divide
+    args:
+    - arg: a
+      type: Number
+    - arg: b
+      type: Number
+    return: Number
+    description: Calculate the divsion of two numbers
+  - function: digits
+    args:
+    - arg: num
+      type: Number
+    - arg: n
+      type: Number
+    return: Number
+    description: Set the precicion for a number
+  - function: getForms
+    args:
+    - arg: version
+      type: Number
+    - arg: workspaceID
+      type: Number
+    return: Array
+    description: Get a list of forms for a workspace
+  - function: getRecords
+    args:
+    - arg: version
+      type: Number
+    - arg: formID
+      type: Number
+    return: Array
+    description: Get a batch of record for a form
+  - function: getWithConfig
+    args:
+    - arg: config
+      type: Object
+    - arg: id
+      type: Number
+    return: Array
+    description: Get a thing with config
