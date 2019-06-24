@@ -24,26 +24,7 @@ const templates = {
 {{/service.description}}{{#service.object}}  var {{service.object}} = {};
 {{/service.object}}`),
 	client: hogan.compile(`  {{^service.object}}var {{/service.object}}{{#service.object}}{{service.object}}.{{/service.object}}{{def.function}} = function({{#def.args}}{{arg}}{{^last}}, {{/last}}{{/def.args}}) {
-{{#service.promise}}
-		return new Promise(function(resolve, reject) {
-			{{client}}.call('{{#service.object}}{{service.object}}.{{/service.object}}{{def.function}}', { {{#def.args}}{{arg}}: {{arg}}{{^last}}, {{/last}}{{/def.args}} }, function(result, error) {
-				if (error) {
-					reject(error);
-				} else {
-					resolve(result);
-				}
-			});
-		});
-{{/service.promise}}
-{{^service.promise}}
-		{{client}}.call('{{#service.object}}{{service.object}}.{{/service.object}}{{def.function}}', { {{#def.args}}{{arg}}: {{arg}}{{^last}}, {{/last}}{{/def.args}} }, function(result, error) {
-			if (error) {
-				throw new Error(error);
-			} else {
-				return result;
-			}
-		});
-{{/service.promise}}
+		{{client}}.call('{{#service.object}}{{service.object}}.{{/service.object}}{{def.function}}', { {{#def.args}}{{arg}}: {{arg}}{{^last}}, {{/last}}{{/def.args}} });
 	}
 `),
 	clientEpilouge: hogan.compile(`

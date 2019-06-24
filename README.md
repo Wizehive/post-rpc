@@ -275,107 +275,40 @@ example.client.js:
   //
   var person = {};
   person.create = function(first, last) {
-  	window.client.call('person.create', { first: first, last: last }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('person.create', { first: first, last: last });
   }
   person.update = function(first, last) {
-  	window.client.call('person.update', { first: first, last: last }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('person.update', { first: first, last: last });
   }
   person.delete = function() {
-  	window.client.call('person.delete', {  }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('person.delete', {  });
   }
 
   // Math service
   //
   var add = function(a, b) {
-  	window.client.call('add', { a: a, b: b }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('add', { a: a, b: b });
   }
   var subtract = function(a, b) {
-  	window.client.call('subtract', { a: a, b: b }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('subtract', { a: a, b: b });
   }
   var multiply = function(a, b) {
-  	window.client.call('multiply', { a: a, b: b }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('multiply', { a: a, b: b });
   }
   var divide = function(a, b) {
-  	window.client.call('divide', { a: a, b: b }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('divide', { a: a, b: b });
   }
   var digits = function(num, n) {
-  	window.client.call('digits', { num: num, n: n }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('digits', { num: num, n: n });
   }
   var getForms = function(version, workspaceID) {
-  	window.client.call('getForms', { version: version, workspaceID: workspaceID }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('getForms', { version: version, workspaceID: workspaceID });
   }
   var getRecords = function(version, formID) {
-  	window.client.call('getRecords', { version: version, formID: formID }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('getRecords', { version: version, formID: formID });
   }
   var getWithConfig = function(config, id) {
-  	window.client.call('getWithConfig', { config: config, id: id }, function(result, error) {
-  		if (error) {
-  			throw new Error(error);
-  		} else {
-  			return result;
-  		}
-  	});
+    window.client.call('getWithConfig', { config: config, id: id });
   }
-
 ```
 

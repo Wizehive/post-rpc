@@ -2,7 +2,6 @@
 # Top level array of services
 - description: Person service
   object: person # optional, functions as members of object
-  promise: true # Wrap client stub as promise
   functions: # Array of funtions
   - function: create # Function name
     args: # Array of arguments for function
@@ -26,7 +25,6 @@
     description: Delete person
 - description: Math service
   object:
-  promise: false
   functions:
   - function: add
     args:
