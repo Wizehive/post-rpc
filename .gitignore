@@ -2,7 +2,7 @@
 *.sublime-workspace
 node_modules/
 npm-debug.log
-lib/
+**/dist/
 example/post-rpc/app/js/
 example/post-rpc/plugin/js/
 test/coverage/
