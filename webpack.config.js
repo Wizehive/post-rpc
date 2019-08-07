@@ -8,7 +8,7 @@ const libraryName = 'PostRPC'
 
 let suffix
 
-module.exports = env => {
+module.exports = ({ env, name }) => {
   env = env || 'dev'
 
   if (env === 'prod') {
@@ -17,10 +17,10 @@ module.exports = env => {
     suffix = '.js'
   }
 
-  return ['client', 'server'].map(name => ({
+  return {
     mode: env === 'prod' ? 'production' : 'development',
-    entry: `${__dirname}/packages/${name}/src/${name}.js`,
-    devtool: env === 'prod' && 'source-map',
+    entry: `./src/${name}.js`,
+    devtool: env !== 'prod' && 'source-map',
     optimization: {
       minimize: env === 'prod'
     },
@@ -46,11 +46,11 @@ module.exports = env => {
       ]
     },
     resolve: {
-      modules: [path.resolve('./node_modules'), path.resolve('./src')],
+      modules: [path.resolve('../../node_modules'), path.resolve('./node_modules'), path.resolve('./src')],
       extensions: ['.json', '.js']
     },
     plugins: []
-  }))
+  }
 }
 
 /**

@@ -14,35 +14,34 @@
  * client instance and then start the client:
  *
  *
- *		var client = new window.PostRPC.Client('http://localhost:5001');
- *		client.start();
+ *		var client = new window.PostRPC.Client('http://localhost:5001')
+ *		client.start()
  *
  * Notifications can be subscribed to any time afterwards as:
  *
  *
  *		client.subscribe('changed', function(response) {
- *			display(null, response);
- *		});
+ *			display(null, response)
+ *		})
  *
  * Registered server RPC's can be called any time afterwards as:
  *
  *			client.call('add', {a: 2, b: 2}, function(response) {
- *				display(response);
- *			});
+ *				display(response)
+ *			})
  *
  */
+require('native-promise-only')
 
-var Promise = require('native-promise-only');
-
-const jsonrpc = '2.0';
+const jsonrpc = '2.0'
 
 const timeoutCode = -32001,
-	  timeoutMessage = 'Timeout',
-	  timeoutData = 'The server didn\'t respond to request within timeframe allowed';
+	timeoutMessage = 'Timeout',
+	timeoutData = 'The server didn\'t respond to request within timeframe allowed'
 
 const internalErrorCode = -32603,
-	  internalErrorMessage = 'Internal error',
-	  internalErrorData = 'Internal JSON-RPC client error';
+	internalErrorMessage = 'Internal error',
+	internalErrorData = 'Internal JSON-RPC client error'
 
 export default class PostRPCClient {
 
@@ -52,11 +51,11 @@ export default class PostRPCClient {
 	 * @param {String} origin  origin uri expected from client
 	 * @return {PostRPCClient} instance
 	 */
-	constructor(origin) {
-		this._running = null;
-		this._timer = undefined;
-		this._listener = undefined;
-		this.init(origin);
+	constructor (origin) {
+		this._running = null
+		this._timer = undefined
+		this._listener = undefined
+		this.init(origin)
 	}
 
 	/**
@@ -64,62 +63,62 @@ export default class PostRPCClient {
 	 * @param {String} origin
 	 * @return {Undefined}
 	 */
-	init(origin) {
-		this.stop();
-		this._name = 'PostRPC.Client';
-		this._origin = origin;
-		this._id = 1;
-		this._queue = [];
-		this._subscribed = {};
-		this._logging = false;
+	init (origin) {
+		this.stop()
+		this._name = 'PostRPC.Client'
+		this._origin = origin
+		this._id = 1
+		this._queue = []
+		this._subscribed = {}
+		this._logging = false
 	}
 
 	/**
 	 * Get client class name
 	 * @return {string} class name
 	 */
-	get name() {
-		return this._name;
+	get name () {
+		return this._name
 	}
 
 	/**
 	 * Get origin uri expected from server
 	 * @return {string} class name
 	 */
-	get origin() {
-		return this._origin;
+	get origin () {
+		return this._origin
 	}
 
 	/**
 	 * Get window client is in
 	 * @return {Window}
 	 */
-	get window() {
-		return window;
+	get window () {
+		return window
 	}
 
 	/**
 	 * Get parent window of client window (where server must be)
 	 * @return {Window}
 	 */
-	get parent() {
-		return window.opener || window.parent;
+	get parent () {
+		return window.opener || window.parent
 	}
 
 	/**
 	 * Get current id
 	 * @return {Number} id
 	 */
-	get id() {
-		return this._id;
+	get id () {
+		return this._id
 	}
 
 	/**
 	 * Get list of subscribed notifications's
 	 * @return {Array[Object]} notifications
 	 */
-	get subscribed() {
-		return this._subscribed;
+	get subscribed () {
+		return this._subscribed
 	}
 
 	/**
@@ -128,17 +127,17 @@ export default class PostRPCClient {
 	 * @param {Function} callback function to notify
 	 * @return {Undefined}
 	*/
-	subscribe(event, callback) {
-		if (TARGET === 'dev') {
+	subscribe (event, callback) {
+		if (this._logging) {
 			this.logGroup('subscribe', [
 				'event: ' + event,
 				'callback: function() {}'
-			]);
+			])
 		}
 		this._subscribed[event] = {
 			callback: callback
-		};
-		return true;
+		}
+		return true
 	}
 
 	/**
@@ -146,68 +145,68 @@ export default class PostRPCClient {
 	 * @param {String} event
 	 * @return {Undefined}
 	*/
-	unsubscribe(event) {
-		delete this._subscribed[event];
-		return true;
+	unsubscribe (event) {
+		delete this._subscribed[event]
+		return true
 	}
 
 	/**
 	 * Increment to the next id
 	 * @return {Number} id
 	 */
-	nextID() {
-		return this._id++;
+	nextID () {
+		return this._id++
 	}
 
 	/**
 	 * Start the client (add postMessage event listener)
 	 * @return {Undefined}
 	*/
-	start() {
+	start () {
 		if (this._timer === undefined) {
-			this._timer = window.setInterval(() => this.timeoutHandler(), 250);
+			this._timer = window.setInterval(() => this.timeoutHandler(), 250)
 		}
 		if (this._listener === undefined) {
-			this._listener = this.messageHandler.bind(this);
-			window.addEventListener('message', this._listener);
+			this._listener = this.messageHandler.bind(this)
+			window.addEventListener('message', this._listener)
 		}
-		this._running = true;
+		this._running = true
 	}
 
 	/**
 	 * Stop the client (remove postMessage event listener)
 	 * @return {Undefined}
 	*/
-	stop() {
+	stop () {
 		if (this._timer) {
-			window.clearInterval(this._timer);
-			this._timer = undefined;
+			window.clearInterval(this._timer)
+			this._timer = undefined
 		}
 		if (this._listener) {
-			window.removeEventListener('message', this._listener);
-			this._listener = undefined;
+			window.removeEventListener('message', this._listener)
+			this._listener = undefined
 		}
-		this._running = false;
+		this._running = false
 	}
 
 	/**
 	 * JSON-RPC v2 request
 	 * @return {Object} response
 	*/
-	request(method, params, id) {
+	request (method, params, id) {
 		return {
 			jsonrpc: jsonrpc,
 			method: method,
 			params: params,
 			id: id
-		};
+		}
 	}
 
 	/**
 	 * JSON-RPC v2+ timeout response
 	 * @return {Object} response
 	*/
-	timeoutResponse(id) {
+	timeoutResponse (id) {
 		return {
 			jsonrpc: jsonrpc,
 			error: {
@@ -216,14 +215,14 @@ export default class PostRPCClient {
 				data: timeoutData
 			},
 			id: id
-		};
+		}
 	}
 
 	/**
 	 * JSON-RPC v2+ internal error response
 	 * @return {Object} response
 	*/
-	internalErrorResponse(id) {
+	internalErrorResponse (id) {
 		return {
 			jsonrpc: jsonrpc,
 			error: {
@@ -232,7 +231,7 @@ export default class PostRPCClient {
 				data: internalErrorData
 			},
 			id: id
-		};
+		}
 	}
 
 	/**
@@ -243,28 +242,28 @@ export default class PostRPCClient {
 	 * @param {Number} timeout in MS to await response
 	 * @return {Undefined}
 	*/
-	call(method, params, callback = null, timeout = 5000) {
+	call (method, params, callback = null, timeout = 5000) {
 		if (!this._running) {
-			throw new Error('Client is not running');
+			throw new Error('Client is not running')
 		}
-		if (TARGET === 'dev') {
+		if (this._logging) {
 			this.log([
 				'call',
 				'method: ' + method,
 				'params: ' + JSON.stringify(params),
 				'timeout: ' + timeout,
 				'callback: ' + callback
-			]);
+			])
 		}
 
-		var promise = null;
-		var resolve = null;
-		var reject = null;
+		var promise = null
+		var resolve = null
+		var reject = null
 
 		promise = new Promise(function (res, rej) {
-			resolve = res;
-			reject = rej;
-		});
+			resolve = res
+			reject = rej
+		})
 
 		this._queue.push({
 			method: method,
@@ -275,10 +274,10 @@ export default class PostRPCClient {
 			callback: callback,
 			resolve: resolve,
 			reject: reject
-		});
-		this.post(this.parent, this.request(method, params, this.id), this._origin);
-		this.nextID();
-		return promise;
+		})
+		this.post(this.parent, this.request(method, params, this.id), this._origin)
+		this.nextID()
+		return promise
 	}
 
 	/**
@@ -286,33 +285,33 @@ export default class PostRPCClient {
 	 * within a given amount of time)
 	 * @return {Undefined}
 	*/
-	timeoutHandler() {
+	timeoutHandler () {
 		if (this._running) {
-			var now = Date.now();
+			var now = Date.now()
 
 			for (var i = this._queue.length - 1; i >= 0; i--) {
-				var call = this._queue[i];
+				var call = this._queue[i]
 
 				// Expired?
 				if ((now - call.sent) > call.timeout) {
-					var messages = [];
-					if (TARGET === 'dev') {
-						messages = ['call expired, id: ' + call.id];
+					var messages = []
+					if (this._logging) {
+						messages = ['call expired, id: ' + call.id]
 					}
 					if (call.callback !== null) {
-						if (TARGET === 'dev') {
-							messages.push('timeout, call callback');
+						if (this._logging) {
+							messages.push('timeout, call callback')
 						}
-						call.callback(this.timeoutResponse(call.id)['error']);
+						call.callback(this.timeoutResponse(call.id)['error'])
 					} else if (call.resolve !== null || call.reject !== null) {
-						if (TARGET === 'dev') {
-							messages.push('timeout, reject promise');
+						if (this._logging) {
+							messages.push('timeout, reject promise')
 						}
-						call.reject(this.timeoutResponse(call.id)['error']);
+						call.reject(this.timeoutResponse(call.id)['error'])
 					}
-					this._queue.splice(i, 1);
-					if (TARGET === 'dev') {
-						this.log(messages);
+					this._queue.splice(i, 1)
+					if (this._logging) {
+						this.log(messages)
 					}
 				}
 			}
@@ -326,9 +325,9 @@ export default class PostRPCClient {
 	 * @param {String} targetOrigin
 	 * @return {Undefined}
 	*/
-	post(targetWindow, message, targetOrigin) {
+	post (targetWindow, message, targetOrigin) {
 		if (this._running && targetWindow) {
-			targetWindow.postMessage(message, targetOrigin);
+			targetWindow.postMessage(message, targetOrigin)
 		}
 	}
 
@@ -337,65 +336,65 @@ export default class PostRPCClient {
 	 * @param {Object} response
 	 * @return {Undefined}
 	*/
-	response(response) {
+	response (response) {
 		if (this._running) {
-			var messages = [];
-			var result;
-			var error;
+			var messages = []
+			var result
+			var error
 
-			if (TARGET === 'dev') {
-				messages = ['response: ' + JSON.stringify(response)];
+			if (this._logging) {
+				messages = ['response: ' + JSON.stringify(response)]
 			}
 
 			if (response && response.id) {	// Call
-				if (TARGET === 'dev') {
-					messages.push('call response');
+				if (this._logging) {
+					messages.push('call response')
 				}
 
 				for (var i = this._queue.length - 1; i >= 0; i--) {
-					var call = this._queue[i];
+					var call = this._queue[i]
 
 					// Match to queue
 					if (response.id === call.id) {
-						result = response.hasOwnProperty('result') ? response.result : null;
-						error = response.hasOwnProperty('error') ? response.error : null;
+						result = response.hasOwnProperty('result') ? response.result : null
+						error = response.hasOwnProperty('error') ? response.error : null
 						if (call.callback !== null) {
-                            if (TARGET === 'dev') {
-                                messages.push('called, call callback');
-                            }
-                            call.callback(result, error);
-                            this._queue.splice(i, 1);
-                        }
+							if (this._logging) {
+								messages.push('called, call callback')
+							}
+							call.callback(result, error)
+							this._queue.splice(i, 1)
+						}
 						if (call.resolve !== null || call.reject !== null) {
-							if (TARGET === 'dev') {
-								messages.push('called, resolve/reject promise');
+							if (this._logging) {
+								messages.push('called, resolve/reject promise')
 							}
 							if (error) {
-								call.reject(error);
+								call.reject(error)
 							} else {
-								call.resolve(result);
+								call.resolve(result)
 							}
-							this._queue.splice(i, 1);
+							this._queue.splice(i, 1)
 						}
 					}
 				}
 			} else if (response && response.event) {	// Event
-				if (TARGET === 'dev') {
-					messages.push('event response');
+				if (this._logging) {
+					messages.push('event response')
 				}
 
 				if (response.event in this._subscribed) {
-					if (TARGET === 'dev') {
-						messages.push('subscribed, call callback');
+					if (this._logging) {
+						messages.push('subscribed, call callback')
 					}
-					var subscribe = this._subscribed[response.event];
-					result = response.hasOwnProperty('result') ? response.result : null;
-					error = response.hasOwnProperty('error') ? response.error : null;
-					subscribe.callback(result, error);
+					var subscribe = this._subscribed[response.event]
+					result = response.hasOwnProperty('result') ? response.result : null
+					error = response.hasOwnProperty('error') ? response.error : null
+					subscribe.callback(result, error)
 				}
 			}
-			if (TARGET === 'dev') {
-				this.log(messages);
+			if (this._logging) {
+				this.log(messages)
 			}
 		}
 	}
@@ -405,15 +404,15 @@ export default class PostRPCClient {
 	 * @param {Object} event
 	 * @return {Undefined}
 	*/
-	messageHandler(event) {
+	messageHandler (event) {
 		if (this._running) {
-	        if (event.origin === this._origin) {
+			if (event.origin === this._origin) {
 				if (event.source && event.source !== window) {
-	 				this.response(event.data);
-	 			}
-	        }
-    	}
-    }
+					this.response(event.data)
+				}
+			}
+		}
+	}
 
 	/**
 	 * Enable/Disable console logging
@@ -421,9 +420,9 @@ export default class PostRPCClient {
 	 * @param {Function} callback function to notify
 	 * @return {Undefined}
 	*/
- 	/* istanbul ignore next */
-	logging(enabled) {
-		this._logging = enabled;
+	/* istanbul ignore next */
+	logging (enabled) {
+		this._logging = enabled
 	}
 
 	/**
@@ -432,22 +431,18 @@ export default class PostRPCClient {
 	 * @param {String} color
 	 * @return {Undefined}
 	*/
- 	/* istanbul ignore next */
-	log(messages, collapse = false, color = 'green') {
-		if (TARGET === 'dev') {
-			if (this._logging) {
-				if (collapse) {
-					console.groupCollapsed(this._name);
-				} else {
-					console.group(this._name);
-				}
-
-				for (var i = 0; i < messages.length; i++) {
-					console.log('%c%s', 'color:' + color, messages[i]);
-				}
-				console.groupEnd();
-			}
+	/* istanbul ignore next */
+	log (messages, collapse = false, color = 'green') {
+		if (collapse) {
+			console.groupCollapsed(this._name)
+		} else {
+			console.group(this._name)
 		}
+
+		for (var i = 0; i < messages.length; i++) {
+			console.log('%c%s', 'color:' + color, messages[i])
+		}
+		console.groupEnd()
 	}
 
 	/**
@@ -456,20 +451,16 @@ export default class PostRPCClient {
 	 * @param {String} color
 	 * @return {Undefined}
 	*/
- 	/* istanbul ignore next */
-	logGroup(group, messages, color = 'green') {
-		if (TARGET === 'dev') {
-			if (this._logging) {
-				console.group(this._name);
-				console.groupCollapsed(group);
+	/* istanbul ignore next */
+	logGroup (group, messages, color = 'green') {
+		console.group(this._name)
+		console.groupCollapsed(group)
 
-				for (var i = 0; i < messages.length; i++) {
-					console.log('%c%s', 'color:' + color, messages[i]);
-				}
-				console.groupEnd();
-				console.groupEnd();
-			}
+		for (var i = 0; i < messages.length; i++) {
+			console.log('%c%s', 'color:' + color, messages[i])
 		}
+		console.groupEnd()
+		console.groupEnd()
 	}
 
 }
