@@ -8,9 +8,9 @@
     "build": "lerna run build",
     "build-dev": "lerna run build-dev",
     "clean": "rm -f lib/*",
-    "example": "webpack-dev-server --content-base example/ --host localhost --port 5005 --colors --watch",
+    "example": "webpack-dev-server --content-base ./example --host localhost --port 5005 --env dev --colors --watch --config webpack.example.config.js",
     "blanket": "webpack-dev-server --host localhost --port 6001 --colors --watch",
-    "test": "webpack --env prod && grunt karma:prod"
+    "test": "lerna run build && grunt karma:prod"
   },
   "devDependencies": {
     "@babel/core": "^7.5.5",
@@ -40,8 +40,7 @@
     "sinon-chai": "^3.3.0",
     "webpack": "^4.39.1",
     "webpack-cli": "^3.3.6",
-    "webpack-dev-server": "^3.7.2",
-    "yargs": "^4.8.1"
+    "webpack-dev-server": "^3.7.2"
   },
   "repository": {
     "type": "git",

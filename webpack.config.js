@@ -2,7 +2,6 @@
 
 const webpack = require('webpack')
 const path = require('path')
-const env = require('yargs').argv.env // use --env with webpack 2
 
 const libraryName = 'PostRPC'
 
@@ -19,7 +18,7 @@ module.exports = ({ env, name }) => {
 
   return {
     mode: env === 'prod' ? 'production' : 'development',
-    entry: `./src/${name}.js`,
+    entry: path.join(__dirname, 'packages', name, 'src', name) + '.js',
     devtool: env !== 'prod' && 'source-map',
     optimization: {
       minimize: env === 'prod'
@@ -27,7 +26,8 @@ module.exports = ({ env, name }) => {
     output: {
       path: path.join(__dirname, 'packages', name, 'dist'),
       filename: `${libraryName}.${capitalize(name)}${suffix}`,
-      library: capitalize(name),
+      library: [libraryName, capitalize(name)],
+      libraryExport: 'default',
       libraryTarget: 'umd',
       umdNamedDefine: true
     },
@@ -46,7 +46,12 @@ module.exports = ({ env, name }) => {
       ]
     },
     resolve: {
-      modules: [path.resolve('../../node_modules'), path.resolve('./node_modules'), path.resolve('./src')],
+      modules: [
+        path.resolve('../../node_modules'),
+        path.resolve('./node_modules'),
+        path.resolve('./src'),
+        path.resolve(`./packages/${name}/node_modules`)
+      ],
       extensions: ['.json', '.js']
     },
     plugins: []

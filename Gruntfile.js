@@ -1,4 +1,4 @@
-module.exports = function(grunt) {
+module.exports = function (grunt) {
     'use strict';
 
     // Load the plugins that provide the tasks we specified in package.json
@@ -16,9 +16,9 @@ module.exports = function(grunt) {
                 src: 'test/*.html'
             }
         },
-	    blanket: {
-	        "data-cover-timeout": 3000
-	    },
+        blanket: {
+            "data-cover-timeout": 3000
+        },
         karma: {
             options: {
                 // Configuration options that tell Karma how to run
@@ -40,8 +40,8 @@ module.exports = function(grunt) {
                     // In our case, the test and src files are the
                     // same for the dev and prod targets so we can include
                     // them in the global files option here
-                    'lib/PostRPC.Client.min.js',
-                    'lib/PostRPC.Server.min.js',
+                    'packages/client/dist/PostRPC.Client.min.js',
+                    'packages/server/dist/PostRPC.Server.min.js',
                     'test/server.spec.js',
                     'test/client.spec.js',
 

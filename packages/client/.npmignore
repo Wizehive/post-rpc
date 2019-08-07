@@ -1,3 +1,4 @@
 src
 dist/PostRPC.Client.js
 dist/PostRPC.Client.js.map
+webpack.config.js
