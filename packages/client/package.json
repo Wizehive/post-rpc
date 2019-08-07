@@ -3,6 +3,9 @@
   "version": "0.6.1",
   "description": "PostRPC - JSON RPC over PostMessage (Client Library)",
   "main": "dist/PostRPC.Client.min.js",
+  "files": [
+    "dist/PostRPC.Client.min.js"
+  ],
   "scripts": {
     "build": "webpack --env prod",
     "build-dev": "webpack --env dev",
