@@ -2,6 +2,7 @@
 *.sublime-workspace
 node_modules/
 npm-debug.log
+lerna-debug.log
 **/dist/
 example/post-rpc/app/js/
 example/post-rpc/plugin/js/
