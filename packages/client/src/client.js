@@ -14,7 +14,7 @@
  * client instance and then start the client:
  *
  *
- *		var client = new window.PostRPC.Client('http://localhost:5001')
+ *		const client = new window.PostRPC.Client('http://localhost:5001')
  *		client.start()
  *
  * Notifications can be subscribed to any time afterwards as:
@@ -35,16 +35,15 @@ require('native-promise-only')
 
 const jsonrpc = '2.0'
 
-const timeoutCode = -32001,
-	timeoutMessage = 'Timeout',
-	timeoutData = 'The server didn\'t respond to request within timeframe allowed'
+const timeoutCode = -32001
+const timeoutMessage = 'Timeout'
+const timeoutData = 'The server didn\'t respond to request within timeframe allowed'
 
-const internalErrorCode = -32603,
-	internalErrorMessage = 'Internal error',
-	internalErrorData = 'Internal JSON-RPC client error'
+const internalErrorCode = -32603
+const internalErrorMessage = 'Internal error'
+const internalErrorData = 'Internal JSON-RPC client error'
 
 export default class PostRPCClient {
-
 	/**
 	 * Constructor
 	 * @param {Window} hostWindow  window client runs in
@@ -134,9 +133,11 @@ export default class PostRPCClient {
 				'callback: function() {}'
 			])
 		}
+
 		this._subscribed[event] = {
 			callback: callback
 		}
+
 		return true
 	}
 
@@ -166,10 +167,12 @@ export default class PostRPCClient {
 		if (this._timer === undefined) {
 			this._timer = window.setInterval(() => this.timeoutHandler(), 250)
 		}
+
 		if (this._listener === undefined) {
 			this._listener = this.messageHandler.bind(this)
 			window.addEventListener('message', this._listener)
 		}
+
 		this._running = true
 	}
 
@@ -182,10 +185,12 @@ export default class PostRPCClient {
 			window.clearInterval(this._timer)
 			this._timer = undefined
 		}
+
 		if (this._listener) {
 			window.removeEventListener('message', this._listener)
 			this._listener = undefined
 		}
+
 		this._running = false
 	}
 
@@ -195,10 +200,10 @@ export default class PostRPCClient {
 	*/
 	request (method, params, id) {
 		return {
-			jsonrpc: jsonrpc,
-			method: method,
-			params: params,
-			id: id
+			jsonrpc,
+			method,
+			params,
+			id
 		}
 	}
 
@@ -208,13 +213,13 @@ export default class PostRPCClient {
 	*/
 	timeoutResponse (id) {
 		return {
-			jsonrpc: jsonrpc,
+			jsonrpc,
+			id,
 			error: {
 				code: timeoutCode,
 				message: timeoutMessage,
 				data: timeoutData
-			},
-			id: id
+			}
 		}
 	}
 
@@ -224,13 +229,13 @@ export default class PostRPCClient {
 	*/
 	internalErrorResponse (id) {
 		return {
-			jsonrpc: jsonrpc,
+			jsonrpc,
+			id,
 			error: {
 				code: internalErrorCode,
 				message: internalErrorMessage,
 				data: internalErrorData
-			},
-			id: id
+			}
 		}
 	}
 
@@ -246,6 +251,7 @@ export default class PostRPCClient {
 		if (!this._running) {
 			throw new Error('Client is not running')
 		}
+
 		if (this._logging) {
 			this.log([
 				'call',
@@ -256,14 +262,16 @@ export default class PostRPCClient {
 			])
 		}
 
-		var promise = null
-		var resolve = null
-		var reject = null
+		let promise = null
+		let res = null
+		let rej = null
 
-		promise = new Promise(function (res, rej) {
-			resolve = res
-			reject = rej
-		})
+		if (!callback) {
+			promise = new Promise((resolve, reject) => {
+				res = resolve
+				rej = reject
+			})
+		}
 
 		this._queue.push({
 			method: method,
@@ -272,11 +280,13 @@ export default class PostRPCClient {
 			sent: Date.now(),
 			timeout: timeout,
 			callback: callback,
-			resolve: resolve,
-			reject: reject
+			resolve: res,
+			reject: rej
 		})
+
 		this.post(this.parent, this.request(method, params, this.id), this._origin)
 		this.nextID()
+
 		return promise
 	}
 
@@ -287,29 +297,35 @@ export default class PostRPCClient {
 	*/
 	timeoutHandler () {
 		if (this._running) {
-			var now = Date.now()
+			const now = Date.now()
 
-			for (var i = this._queue.length - 1; i >= 0; i--) {
-				var call = this._queue[i]
+			for (let i = this._queue.length - 1; i >= 0; i--) {
+				const call = this._queue[i]
 
 				// Expired?
 				if ((now - call.sent) > call.timeout) {
-					var messages = []
+					const messages = []
+
 					if (this._logging) {
 						messages = ['call expired, id: ' + call.id]
 					}
+
 					if (call.callback !== null) {
 						if (this._logging) {
 							messages.push('timeout, call callback')
 						}
+
 						call.callback(this.timeoutResponse(call.id)['error'])
 					} else if (call.resolve !== null || call.reject !== null) {
 						if (this._logging) {
 							messages.push('timeout, reject promise')
 						}
+
 						call.reject(this.timeoutResponse(call.id)['error'])
 					}
+
 					this._queue.splice(i, 1)
+
 					if (this._logging) {
 						this.log(messages)
 					}
@@ -338,9 +354,7 @@ export default class PostRPCClient {
 	*/
 	response (response) {
 		if (this._running) {
-			var messages = []
-			var result
-			var error
+			const messages = []
 
 			if (this._logging) {
 				messages = ['response: ' + JSON.stringify(response)]
@@ -351,29 +365,34 @@ export default class PostRPCClient {
 					messages.push('call response')
 				}
 
-				for (var i = this._queue.length - 1; i >= 0; i--) {
-					var call = this._queue[i]
+				for (let i = this._queue.length - 1; i >= 0; i--) {
+					const call = this._queue[i]
 
 					// Match to queue
 					if (response.id === call.id) {
-						result = response.hasOwnProperty('result') ? response.result : null
-						error = response.hasOwnProperty('error') ? response.error : null
+						const result = response.hasOwnProperty('result') ? response.result : null
+						const error = response.hasOwnProperty('error') ? response.error : null
+
 						if (call.callback !== null) {
 							if (this._logging) {
 								messages.push('called, call callback')
 							}
+
 							call.callback(result, error)
 							this._queue.splice(i, 1)
 						}
+
 						if (call.resolve !== null || call.reject !== null) {
 							if (this._logging) {
 								messages.push('called, resolve/reject promise')
 							}
+
 							if (error) {
 								call.reject(error)
 							} else {
 								call.resolve(result)
 							}
+
 							this._queue.splice(i, 1)
 						}
 					}
@@ -387,12 +406,15 @@ export default class PostRPCClient {
 					if (this._logging) {
 						messages.push('subscribed, call callback')
 					}
-					var subscribe = this._subscribed[response.event]
-					result = response.hasOwnProperty('result') ? response.result : null
-					error = response.hasOwnProperty('error') ? response.error : null
+
+					const subscribe = this._subscribed[response.event]
+					const result = response.hasOwnProperty('result') ? response.result : null
+					const error = response.hasOwnProperty('error') ? response.error : null
+
 					subscribe.callback(result, error)
 				}
 			}
+
 			if (this._logging) {
 				this.log(messages)
 			}
@@ -405,12 +427,8 @@ export default class PostRPCClient {
 	 * @return {Undefined}
 	*/
 	messageHandler (event) {
-		if (this._running) {
-			if (event.origin === this._origin) {
-				if (event.source && event.source !== window) {
-					this.response(event.data)
-				}
-			}
+		if (this._running && event.origin === this._origin && event.source && event.source !== window) {
+			this.response(event.data)
 		}
 	}
 
@@ -439,9 +457,10 @@ export default class PostRPCClient {
 			console.group(this._name)
 		}
 
-		for (var i = 0; i < messages.length; i++) {
-			console.log('%c%s', 'color:' + color, messages[i])
-		}
+		messages.forEach(message => {
+			console.log('%c%s', 'color:' + color, message)
+		})
+
 		console.groupEnd()
 	}
 
@@ -456,9 +475,10 @@ export default class PostRPCClient {
 		console.group(this._name)
 		console.groupCollapsed(group)
 
-		for (var i = 0; i < messages.length; i++) {
-			console.log('%c%s', 'color:' + color, messages[i])
-		}
+		messages.forEach(message => {
+			console.log('%c%s', 'color:' + color, message)
+		})
+
 		console.groupEnd()
 		console.groupEnd()
 	}
