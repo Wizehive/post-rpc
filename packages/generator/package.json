@@ -1,6 +1,6 @@
 {
   "name": "@zenginehq/post-rpc-generator",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Stub Function Generator for PostRPC",
   "main": "generate.js",
   "scripts": {
