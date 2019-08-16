@@ -11,10 +11,28 @@ PostRPC is distributed as two separate javascript bundles. One for the server, a
 
 ## PostRPC.Server
 
-The server library needs to be loaded into the parent window. Once the page is loaded (DOM loaded and parsed), you would instantiate a server instance with the domain that both the parent window and child iFrame windows are loaded from:
+Installation:
 
 ```
-var server = new window.PostRPC.Server('http://localhost:5001');
+$ npm i @zenginehq/post-rpc-server
+```
+
+The library is delivered in UMD, so it is available in your project via
+
+```
+import { Server } from '@zenginehq/post-rpc-server';
+```
+
+or
+
+```
+const Server = window.PostRPC.Server;
+```
+
+The server library needs to be loaded into the parent window. Once the page is loaded (DOM loaded and parsed), you would instantiate a server instance with the domain that the target child iframe window is loaded from:
+
+```
+const server = new window.PostRPC.Server('http://localhost:5001');
 
 ```
 
