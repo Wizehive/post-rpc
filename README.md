@@ -142,6 +142,12 @@ client.logging(true);
 
 Client and server stubs can be generated using an interface defition file (yaml).
 
+Installation:
+
+```
+$ npm i [-g] @zenginehq/post-rpc-generator
+```
+
 example.yml:
 ```
 ---
@@ -241,7 +247,7 @@ example.yml:
 Generating:
 
 ```
-$ src/generate.js example.yml
+$ generate example.yml
 ```
 
 Will produce server and server stubs:
