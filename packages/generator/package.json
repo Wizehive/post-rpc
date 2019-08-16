@@ -30,5 +30,6 @@
   ],
   "author": "David McNelis",
   "license": "MIT",
-  "homepage": "https://github.com/wizehive/post-rpc"
+  "homepage": "https://github.com/wizehive/post-rpc",
+  "gitHead": "1a72e2192fea199d2345bdcc8f00bbfc91406799"
 }
