@@ -6,6 +6,9 @@
   "scripts": {
     "publish": "npm publish --access public"
   },
+  "bin": {
+    "generate": "./generate.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/wizehive/post-rpc.git"
