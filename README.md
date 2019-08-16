@@ -84,10 +84,28 @@ server.logging(true);
 
 ## PostRPC.Client
 
-The clientlibrary needs to be loaded into each child iFrame window in order to make RPC calls or listen to server notifications.  Once the iFrame is loaded (DOM loaded and parsed), you would instantiate a client instance with the domain that both the parent window and child iFrame windows are loaded from:
+Installation:
 
 ```
-var client = new window.PostRPC.Client('http://localhost:5001');
+$ npm i @zenginehq/post-rpc-client
+```
+
+The library is delivered in UMD, so it is available in your project via
+
+```
+import { Client } from '@zenginehq/post-rpc-client';
+```
+
+or
+
+```
+const Client = window.PostRPC.Client;
+```
+
+The client library needs to be loaded into each child iFrame window in order to make RPC calls or listen to server notifications.  Once the iFrame is loaded (DOM loaded and parsed), you would instantiate a client instance with the domain that the parent window is loaded from:
+
+```
+const client = new Client('http://localhost:5001');
 ```
 
 ### Starting the Client
