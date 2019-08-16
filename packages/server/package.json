@@ -1,0 +1,30 @@
+{
+  "name": "@zenginehq/post-rpc-server",
+  "version": "0.6.3",
+  "description": "PostRPC - JSON RPC over PostMessage (Server Library)",
+  "main": "dist/PostRPC.Server.min.js",
+  "files": [
+    "dist/PostRPC.Server.min.js"
+  ],
+  "scripts": {
+    "build": "webpack --env prod",
+    "build-dev": "webpack --env dev",
+    "publish": "npm publish --access public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wizehive/post-rpc.git"
+  },
+  "keywords": [
+    "call",
+    "json",
+    "rpc",
+    "postmessage",
+    "iframe",
+    "server"
+  ],
+  "author": "David McNelis",
+  "license": "MIT",
+  "homepage": "https://github.com/wizehive/post-rpc",
+  "gitHead": "77599333fb8df6b6c7aef596eea236122a8a191c"
+}

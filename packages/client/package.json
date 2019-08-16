@@ -1,0 +1,33 @@
+{
+  "name": "@zenginehq/post-rpc-client",
+  "version": "0.6.3",
+  "description": "PostRPC - JSON RPC over PostMessage (Client Library)",
+  "main": "dist/PostRPC.Client.min.js",
+  "files": [
+    "dist/PostRPC.Client.min.js"
+  ],
+  "scripts": {
+    "build": "webpack --env prod",
+    "build-dev": "webpack --env dev",
+    "publish": "npm publish --access public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wizehive/post-rpc.git"
+  },
+  "dependencies": {
+    "native-promise-only": "0.8.1"
+  },
+  "keywords": [
+    "call",
+    "json",
+    "rpc",
+    "postmessage",
+    "iframe",
+    "client"
+  ],
+  "author": "David McNelis",
+  "license": "MIT",
+  "homepage": "https://github.com/wizehive/post-rpc",
+  "gitHead": "77599333fb8df6b6c7aef596eea236122a8a191c"
+}

@@ -1,13 +1,13 @@
-var createFixture = function (origin, libpath) {
+var createFixture = function (origin, packagesPath) {
 	var serverIframe, serverWindow, serverDocument, serverSource;
 	// Create(if not exist) server iframe
 	serverIframe = top.document.getElementById('server');
 	if (!serverIframe) {
 		serverIframe = top.document.createElement('iframe');
-        serverIframe.setAttribute('src', 'about:blank');
+		serverIframe.setAttribute('src', 'about:blank');
 		serverIframe.setAttribute('id', 'server');
 		serverIframe.setAttribute('style', 'position: fixed; top: 0; left: -99999px;');
-        top.document.body.appendChild(serverIframe);
+		top.document.body.appendChild(serverIframe);
 		serverWindow = serverIframe.contentWindow;
 		serverDocument = serverWindow.document;
 		serverSource = [
@@ -16,10 +16,10 @@ var createFixture = function (origin, libpath) {
 			'    <meta charset="UTF-8">',
 			'  </head>',
 			'  <body>',
-			'    <script type="text/javascript" src="' + libpath + '/PostRPC.Server.min.js"  data-cover></script>',
+			'    <script type="text/javascript" src="/base/packages/server/dist/PostRPC.Server.min.js"  data-cover></script>',
 			'    <script type="text/javascript">',
 			'        try {',
-			'          console.log(\'create window.PostRPC.Server\');',
+			'          console.log(typeof window.PostRPC.Server, JSON.stringify(window.PostRPC.Server, null, 2));',
 			'          window.postrpc_server = new window.PostRPC.Server(\'' + origin + '\');',
 			'        }',
 			'        catch(err) {',
@@ -34,7 +34,7 @@ var createFixture = function (origin, libpath) {
 			serverDocument.write(serverSource[i]);
 		}
 		serverDocument.close();
-    }
+	}
 	serverIframe = top.document.getElementById('server');
 	serverWindow = serverIframe.contentWindow;
 	serverDocument = serverWindow.document;
@@ -44,10 +44,10 @@ var createFixture = function (origin, libpath) {
 	clientIframe = serverDocument.getElementById('client');
 	if (!clientIframe) {
 		clientIframe = serverDocument.createElement('iframe');
-        clientIframe.setAttribute('src', 'about:blank');
+		clientIframe.setAttribute('src', 'about:blank');
 		clientIframe.setAttribute('id', 'client');
 		clientIframe.setAttribute('style', 'position: fixed; top: 0; left: -99999px;');
-        serverDocument.body.appendChild(clientIframe);
+		serverDocument.body.appendChild(clientIframe);
 		clientWindow = clientIframe.contentWindow;
 		clientDocument = clientWindow.document;
 		clientSource = [
@@ -56,7 +56,7 @@ var createFixture = function (origin, libpath) {
 			'    <meta charset="UTF-8">',
 			'  </head>',
 			'  <body>',
-			'    <script type="text/javascript" src="' + libpath + '/PostRPC.Client.min.js"  data-cover></script>',
+			'    <script type="text/javascript" src="/base/packages/client/dist/PostRPC.Client.min.js"  data-cover></script>',
 			'    <script type="text/javascript">',
 			'        try {',
 			'          console.log(\'create window.PostRPC.Client\');',
@@ -74,7 +74,7 @@ var createFixture = function (origin, libpath) {
 			clientDocument.write(clientSource[j]);
 		}
 		clientDocument.close();
-    }
+	}
 	clientIframe = serverDocument.getElementById('client');
 	clientWindow = clientIframe.contentWindow;
 	clientDocument = clientWindow.document;
@@ -158,9 +158,9 @@ var logFixture = function () {
 								}
 
 								server = serverWindow.postrpc_server;
-var serializer = new XMLSerializer();
-console.log('serverWindow', serializer.serializeToString(serverWindow.document));
-console.log('serverWindow source', serverWindow.document.documentElement.innerHTML);
+								var serializer = new XMLSerializer();
+								console.log('serverWindow', serializer.serializeToString(serverWindow.document));
+								console.log('serverWindow source', serverWindow.document.documentElement.innerHTML);
 
 								if (server) {
 									console.log('server found');

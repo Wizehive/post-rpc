@@ -1,4 +1,4 @@
-module.exports = function(config) {
+module.exports = function (config) {
     config.set({
 
         // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -19,7 +19,7 @@ module.exports = function(config) {
         // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
         preprocessors: {
             'test/*.html': ['html2js'],
-            'lib/*.js': ['coverage']
+            'packages/*/src/*.js': ['coverage']
         },
 
         // test results reporter to use
@@ -38,14 +38,14 @@ module.exports = function(config) {
 
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-        browsers: ['Chrome','PhantomJS'],
+        browsers: ['Chrome', 'PhantomJS'],
 
-		    client: {
-		      captureConsole: true,
-		      mocha: {
-		        bail: true
-		      }
-		    },
+        client: {
+            captureConsole: true,
+            mocha: {
+                bail: true
+            }
+        },
 
         // Continuous Integration mode
         // if true, Karma captures browsers, runs the tests and exits
@@ -54,7 +54,7 @@ module.exports = function(config) {
         // level of logging
         // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
         logLevel: config.LOG_INFO,
-        //logLevel: config.LOG_DEBUG,
+        // logLevel: config.LOG_DEBUG,
 
         coverageReporter: {
             dir: 'test/coverage',
