@@ -11,10 +11,28 @@ PostRPC is distributed as two separate javascript bundles. One for the server, a
 
 ## PostRPC.Server
 
-The server library needs to be loaded into the parent window. Once the page is loaded (DOM loaded and parsed), you would instantiate a server instance with the domain that both the parent window and child iFrame windows are loaded from:
+Installation:
 
 ```
-var server = new window.PostRPC.Server('http://localhost:5001');
+$ npm i @zenginehq/post-rpc-server
+```
+
+The library is delivered in UMD, so it is available in your project via
+
+```
+import { Server } from '@zenginehq/post-rpc-server';
+```
+
+or
+
+```
+const Server = window.PostRPC.Server;
+```
+
+The server library needs to be loaded into the parent window. Once the page is loaded (DOM loaded and parsed), you would instantiate a server instance with the domain that the target child iframe window is loaded from:
+
+```
+const server = new window.PostRPC.Server('http://localhost:5001');
 
 ```
 
@@ -84,10 +102,28 @@ server.logging(true);
 
 ## PostRPC.Client
 
-The clientlibrary needs to be loaded into each child iFrame window in order to make RPC calls or listen to server notifications.  Once the iFrame is loaded (DOM loaded and parsed), you would instantiate a client instance with the domain that both the parent window and child iFrame windows are loaded from:
+Installation:
 
 ```
-var client = new window.PostRPC.Client('http://localhost:5001');
+$ npm i @zenginehq/post-rpc-client
+```
+
+The library is delivered in UMD, so it is available in your project via
+
+```
+import { Client } from '@zenginehq/post-rpc-client';
+```
+
+or
+
+```
+const Client = window.PostRPC.Client;
+```
+
+The client library needs to be loaded into each child iFrame window in order to make RPC calls or listen to server notifications.  Once the iFrame is loaded (DOM loaded and parsed), you would instantiate a client instance with the domain that the parent window is loaded from:
+
+```
+const client = new Client('http://localhost:5001');
 ```
 
 ### Starting the Client
@@ -141,6 +177,12 @@ client.logging(true);
 ## Generating stubs from Interface Definitions
 
 Client and server stubs can be generated using an interface defition file (yaml).
+
+Installation:
+
+```
+$ npm i [-g] @zenginehq/post-rpc-generator
+```
 
 example.yml:
 ```
@@ -241,7 +283,7 @@ example.yml:
 Generating:
 
 ```
-$ src/generate.js example.yml
+$ generate example.yml
 ```
 
 Will produce server and server stubs:

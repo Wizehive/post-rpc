@@ -1,6 +1,6 @@
 {
   "name": "@zenginehq/post-rpc-server",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "PostRPC - JSON RPC over PostMessage (Server Library)",
   "main": "dist/PostRPC.Server.min.js",
   "files": [
@@ -26,5 +26,5 @@
   "author": "David McNelis",
   "license": "MIT",
   "homepage": "https://github.com/wizehive/post-rpc",
-  "gitHead": "77599333fb8df6b6c7aef596eea236122a8a191c"
+  "gitHead": "1a72e2192fea199d2345bdcc8f00bbfc91406799"
 }
