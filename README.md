@@ -8,6 +8,39 @@ PostRPC is distributed as two separate javascript bundles. One for the server, a
 
 ![Example](/example.png?raw=true "Example with Logging")
 
+## Usage
+
+[Server](#postrpcserver)
+
+[Client](#postrpcclient)
+
+[Generator](#generating-stubs-from-interface-definitions)
+
+## Development
+
+This project is a [Lerna](https://github.com/lerna/lerna) Monorepo, so consult the Lerna docs for command-specific information.
+
+Server and Client libraries are built by webpack as UMD modules.
+
+To develop locally:
+
+```sh
+# prepare project
+git clone ... && cd post-rpc
+lerna bootstrap --hoist
+
+# build project
+lerna run build
+lerna run build-dev # (needs work though)
+
+# watch and rebuild project on changes
+lerna run watch
+
+# change output directory of server library by setting this absolute path variable
+POSTRPC_SERVER_OUTPUT_PATH='/Users/my-name/path/to/dest/of/post-rpc-server' lerna run watch
+```
+
+The `POSTRPC_SERVER_OUTPUT_PATH` variable is useful for working in a project that doesn't handle symlinks well, otherwise you can cd into the package you intend to use locally (`packages/client` or `packages/server`) and simply use `npm link` in conjunction with `lerna run watch`.
 
 ## PostRPC.Server
 
