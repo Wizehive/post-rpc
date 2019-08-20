@@ -31,7 +31,6 @@ lerna bootstrap --hoist
 
 # build project
 lerna run build
-lerna run build-dev # (needs work though)
 
 # watch and rebuild project on changes
 lerna run watch
