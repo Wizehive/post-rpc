@@ -4,17 +4,11 @@ const webpack = require('webpack')
 const path = require('path')
 
 const libraryName = 'PostRPC'
+const { POSTRPC_SERVER_OUTPUT_PATH } = process.env
 
-let suffix
-
-module.exports = ({ env, name }) => {
-  env = env || 'dev'
-
-  if (env === 'prod') {
-    suffix = '.min.js'
-  } else {
-    suffix = '.js'
-  }
+module.exports = ({ env = 'dev', name }) => {
+  const outputPath = (name === 'server' && POSTRPC_SERVER_OUTPUT_PATH) || path.join(__dirname, 'packages', name, 'dist')
+  const suffix = env === 'prod' ? '.min.js' : '.js'
 
   return {
     mode: env === 'prod' ? 'production' : 'development',
@@ -24,7 +18,7 @@ module.exports = ({ env, name }) => {
       minimize: env === 'prod'
     },
     output: {
-      path: path.join(__dirname, 'packages', name, 'dist'),
+      path: outputPath,
       filename: `${libraryName}.${capitalize(name)}${suffix}`,
       library: [libraryName, capitalize(name)],
       libraryExport: 'default',

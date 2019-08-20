@@ -10,7 +10,7 @@
     "build": "webpack --env prod",
     "build-dev": "webpack --env dev",
     "publish": "npm publish --access public",
-    "watch": "webpack --watch"
+    "watch": "webpack --watch --env prod"
   },
   "repository": {
     "type": "git",
