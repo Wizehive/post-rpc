@@ -70,24 +70,17 @@ export default class PostRPCServer {
   /**
    * Construct server instance
    * @param {String} origin  origin uri expected from client
+	 * @param {Object} childWindow target iframe's contentWindow (for comparison with MessageEvent.source)
    * @return {PostRPCServer} instance
    */
-	constructor (origin, identifier) {
+	constructor (origin, childWindow) {
 		this.origin = origin
-		this.identifier = identifier
+		this.childWindow = childWindow
 		this.name = 'PostRPC.Server'
 		this.registered = {}
 		this.running = null
 		this.listener = undefined
 		this._logging = false
-	}
-
-  /**
-   * Get window server is in
-   * @return {Window}
-   */
-	window () {
-		return window
 	}
 
   /**
@@ -556,12 +549,8 @@ export default class PostRPCServer {
    * @return {Undefined}
   */
 	messageHandler (event) {
-		if (this.running) {
-			if (event.origin === 'null' || event.origin === this.origin) {
-				if (event.source && event.source !== window) {
-					this.request(event.data, event.source)
-				}
-			}
+		if (this.running && event.origin === this.origin && event.source && event.source === this.childWindow) {
+			this.request(event.data, event.source)
 		}
 	}
 
