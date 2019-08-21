@@ -70,57 +70,17 @@ export default class PostRPCServer {
   /**
    * Construct server instance
    * @param {String} origin  origin uri expected from client
+	 * @param {Object} childWindow target iframe's contentWindow (for comparison with MessageEvent.source)
    * @return {PostRPCServer} instance
    */
-	constructor (origin) {
-		this._running = null
-		this._listener = undefined
-		this.init(origin)
-	}
-
-  /**
-   * Initialize/Reinitial
-   * @param {String} origin
-   * @return {Undefined}
-   */
-	init (origin) {
-		this.stop()
-		this._name = 'PostRPC.Server'
-		this._origin = origin
-		this._registered = {}
+	constructor (origin, childWindow) {
+		this.origin = origin
+		this.childWindow = childWindow
+		this.name = 'PostRPC.Server'
+		this.registered = {}
+		this.running = null
+		this.listener = undefined
 		this._logging = false
-	}
-
-  /**
-   * Get server class name
-   * @return {string} class name
-   */
-	get name () {
-		return this._name
-	}
-
-  /**
-   * Get origin uri expected from client
-   * @return {string} class name
-   */
-	get origin () {
-		return this._origin
-	}
-
-  /**
-   * Get window server is in
-   * @return {Window}
-   */
-	get window () {
-		return window
-	}
-
-  /**
-   * Get list of registered RPC's
-   * @return {Array[Object]} rpcs
-   */
-	get registered () {
-		return this._registered
 	}
 
   /**
@@ -142,7 +102,7 @@ export default class PostRPCServer {
 			])
 		}
 
-		this._registered[method] = {
+		this.registered[method] = {
 			params: params,
 			return: ret,
 			function: func,
@@ -158,8 +118,8 @@ export default class PostRPCServer {
    * @return {Boolean}
   */
 	unregister (method) {
-		if (this._registered.hasOwnProperty(method)) {
-			delete this._registered[method]
+		if (this.registered.hasOwnProperty(method)) {
+			delete this.registered[method]
 			return true
 		}
 
@@ -190,7 +150,7 @@ export default class PostRPCServer {
    * @return {Boolean}
   */
 	isMethodFound (request) {
-		if (request.method in this._registered) {
+		if (request.method in this.registered) {
 			return true
 		}
 
@@ -392,7 +352,7 @@ export default class PostRPCServer {
    * @return {Undefined}
   */
 	publish (name, result) {
-		if (this._running) {
+		if (this.running) {
 			const messages = []
 
 			if (this._logging) {
@@ -417,12 +377,12 @@ export default class PostRPCServer {
    * @return {Undefined}
   */
 	start () {
-		if (this._listener === undefined) {
-			this._listener = this.messageHandler.bind(this)
-			window.addEventListener('message', this._listener)
+		if (this.listener === undefined) {
+			this.listener = this.messageHandler.bind(this)
+			window.addEventListener('message', this.listener)
 		}
 
-		this._running = true
+		this.running = true
 	}
 
   /**
@@ -430,12 +390,12 @@ export default class PostRPCServer {
    * @return {Undefined}
   */
 	stop () {
-		if (this._listener) {
-			window.removeEventListener('message', this._listener)
-			this._listener = undefined
+		if (this.listener) {
+			window.removeEventListener('message', this.listener)
+			this.listener = undefined
 		}
 
-		this._running = false
+		this.running = false
 	}
 
   /**
@@ -466,7 +426,7 @@ export default class PostRPCServer {
    * @return {Undefined}
   */
 	post (targetWindow, message, targetOrigin) {
-		if (this._running && targetWindow) {
+		if (this.running && targetWindow) {
 			targetWindow.postMessage(message, targetOrigin)
 		}
 	}
@@ -479,7 +439,7 @@ export default class PostRPCServer {
   */
 	request (request, targetWindow) {
 
-		if (this._running) {
+		if (this.running) {
 			const messages = []
 
 			if (this._logging) {
@@ -499,7 +459,7 @@ export default class PostRPCServer {
 
 				this.post(targetWindow, this.methodNotFoundResponse(request), '*')
 			} else {
-				const rpc = this._registered[request.method]
+				const rpc = this.registered[request.method]
 				const func = rpc.function
 				const args = this.mapParams(request.params, rpc.params)
 
@@ -589,12 +549,8 @@ export default class PostRPCServer {
    * @return {Undefined}
   */
 	messageHandler (event) {
-		if (this._running) {
-			if (event.origin === 'null' || event.origin === this._origin) {
-				if (event.source && event.source !== window) {
-					this.request(event.data, event.source)
-				}
-			}
+		if (this.running && event.origin === this.origin && event.source && event.source === this.childWindow) {
+			this.request(event.data, event.source)
 		}
 	}
 
@@ -657,8 +613,8 @@ export default class PostRPCServer {
 		console.group(this._name)
 		console.group('registered')
 
-		Object.keys(this._registered)
-			.map(key => [key, this._registered[key]])
+		Object.keys(this.registered)
+			.map(key => [key, this.registered[key]])
 			.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)
 			.forEach(currentLog => {
 				const messages = []
