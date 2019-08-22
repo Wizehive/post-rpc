@@ -47,10 +47,6 @@ describe('PostRPC.Server', function () {
 		client = findClient();
 		serverWindow = findServerWindow();
 		clientWindow = findClientWindow();
-		if (server.window === client.window) {
-			throw new Error('server.window and client.window can\'t be same window');
-		}
-
 	});
 
 	describe('name', function () {

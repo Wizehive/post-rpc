@@ -46,78 +46,27 @@ const internalErrorData = 'Internal JSON-RPC client error'
 export default class PostRPCClient {
 	/**
 	 * Constructor
-	 * @param {Window} hostWindow  window client runs in
 	 * @param {String} origin  origin uri expected from client
 	 * @return {PostRPCClient} instance
 	 */
 	constructor (origin) {
-		this._running = null
-		this._timer = undefined
-		this._listener = undefined
-		this.init(origin)
-	}
-
-	/**
-	 * Initialize/Reinitial
-	 * @param {String} origin
-	 * @return {Undefined}
-	 */
-	init (origin) {
-		this.stop()
-		this._name = 'PostRPC.Client'
-		this._origin = origin
-		this._id = 1
-		this._queue = []
-		this._subscribed = {}
+		this.running = null
+		this.timer = undefined
+		this.listener = undefined
+		this.name = 'PostRPC.Client'
+		this.origin = origin
+		this.id = 1
+		this.queue = []
+		this.subscribed = {}
 		this._logging = false
-	}
-
-	/**
-	 * Get client class name
-	 * @return {string} class name
-	 */
-	get name () {
-		return this._name
-	}
-
-	/**
-	 * Get origin uri expected from server
-	 * @return {string} class name
-	 */
-	get origin () {
-		return this._origin
-	}
-
-	/**
-	 * Get window client is in
-	 * @return {Window}
-	 */
-	get window () {
-		return window
 	}
 
 	/**
 	 * Get parent window of client window (where server must be)
 	 * @return {Window}
 	 */
-	get parent () {
+	parent () {
 		return window.opener || window.parent
-	}
-
-	/**
-	 * Get current id
-	 * @return {Number} id
-	 */
-	get id () {
-		return this._id
-	}
-
-	/**
-	 * Get list of subscribed notifications's
-	 * @return {Array[Object]} notifications
-	 */
-	get subscribed () {
-		return this._subscribed
 	}
 
 	/**
@@ -134,7 +83,7 @@ export default class PostRPCClient {
 			])
 		}
 
-		this._subscribed[event] = {
+		this.subscribed[event] = {
 			callback: callback
 		}
 
@@ -147,7 +96,7 @@ export default class PostRPCClient {
 	 * @return {Undefined}
 	*/
 	unsubscribe (event) {
-		delete this._subscribed[event]
+		delete this.subscribed[event]
 		return true
 	}
 
@@ -156,7 +105,7 @@ export default class PostRPCClient {
 	 * @return {Number} id
 	 */
 	nextID () {
-		return this._id++
+		return this.id++
 	}
 
 	/**
@@ -164,16 +113,16 @@ export default class PostRPCClient {
 	 * @return {Undefined}
 	*/
 	start () {
-		if (this._timer === undefined) {
-			this._timer = window.setInterval(() => this.timeoutHandler(), 250)
+		if (this.timer === undefined) {
+			this.timer = window.setInterval(() => this.timeoutHandler(), 250)
 		}
 
-		if (this._listener === undefined) {
-			this._listener = this.messageHandler.bind(this)
-			window.addEventListener('message', this._listener)
+		if (this.listener === undefined) {
+			this.listener = this.messageHandler.bind(this)
+			window.addEventListener('message', this.listener)
 		}
 
-		this._running = true
+		this.running = true
 	}
 
 	/**
@@ -181,17 +130,17 @@ export default class PostRPCClient {
 	 * @return {Undefined}
 	*/
 	stop () {
-		if (this._timer) {
-			window.clearInterval(this._timer)
-			this._timer = undefined
+		if (this.timer) {
+			window.clearInterval(this.timer)
+			this.timer = undefined
 		}
 
-		if (this._listener) {
-			window.removeEventListener('message', this._listener)
-			this._listener = undefined
+		if (this.listener) {
+			window.removeEventListener('message', this.listener)
+			this.listener = undefined
 		}
 
-		this._running = false
+		this.running = false
 	}
 
 	/**
@@ -248,7 +197,7 @@ export default class PostRPCClient {
 	 * @return {Undefined}
 	*/
 	call (method, params, callback = null, timeout = 5000) {
-		if (!this._running) {
+		if (!this.running) {
 			throw new Error('Client is not running')
 		}
 
@@ -273,7 +222,7 @@ export default class PostRPCClient {
 			})
 		}
 
-		this._queue.push({
+		this.queue.push({
 			method: method,
 			params: params,
 			id: this.id,
@@ -284,7 +233,7 @@ export default class PostRPCClient {
 			reject: rej
 		})
 
-		this.post(this.parent, this.request(method, params, this.id), this._origin)
+		this.post(this.parent(), this.request(method, params, this.id), this.origin)
 		this.nextID()
 
 		return promise
@@ -296,18 +245,18 @@ export default class PostRPCClient {
 	 * @return {Undefined}
 	*/
 	timeoutHandler () {
-		if (this._running) {
+		if (this.running) {
 			const now = Date.now()
 
-			for (let i = this._queue.length - 1; i >= 0; i--) {
-				const call = this._queue[i]
+			for (let i = this.queue.length - 1; i >= 0; i--) {
+				const call = this.queue[i]
 
 				// Expired?
 				if ((now - call.sent) > call.timeout) {
 					const messages = []
 
 					if (this._logging) {
-						messages = ['call expired, id: ' + call.id]
+						messages.push('call expired, id: ' + call.id)
 					}
 
 					if (call.callback !== null) {
@@ -324,7 +273,7 @@ export default class PostRPCClient {
 						call.reject(this.timeoutResponse(call.id)['error'])
 					}
 
-					this._queue.splice(i, 1)
+					this.queue.splice(i, 1)
 
 					if (this._logging) {
 						this.log(messages)
@@ -335,29 +284,29 @@ export default class PostRPCClient {
 	}
 
 	/**
-	 * Wrap postMessage for testablity
+	 * Send data to parent over postMessage
 	 * @param {Window} targetWindow
 	 * @param {Object} message
 	 * @param {String} targetOrigin
 	 * @return {Undefined}
 	*/
 	post (targetWindow, message, targetOrigin) {
-		if (this._running && targetWindow) {
+		if (this.running && targetWindow) {
 			targetWindow.postMessage(message, targetOrigin)
 		}
 	}
 
 	/**
-	 * Wrap response for testablity
+	 * Process reponses
 	 * @param {Object} response
 	 * @return {Undefined}
 	*/
 	response (response) {
-		if (this._running) {
+		if (this.running) {
 			const messages = []
 
 			if (this._logging) {
-				messages = ['response: ' + JSON.stringify(response)]
+				messages.push('response: ' + JSON.stringify(response))
 			}
 
 			if (response && response.id) {	// Call
@@ -365,8 +314,8 @@ export default class PostRPCClient {
 					messages.push('call response')
 				}
 
-				for (let i = this._queue.length - 1; i >= 0; i--) {
-					const call = this._queue[i]
+				for (let i = this.queue.length - 1; i >= 0; i--) {
+					const call = this.queue[i]
 
 					// Match to queue
 					if (response.id === call.id) {
@@ -379,7 +328,7 @@ export default class PostRPCClient {
 							}
 
 							call.callback(result, error)
-							this._queue.splice(i, 1)
+							this.queue.splice(i, 1)
 						}
 
 						if (call.resolve !== null || call.reject !== null) {
@@ -393,7 +342,7 @@ export default class PostRPCClient {
 								call.resolve(result)
 							}
 
-							this._queue.splice(i, 1)
+							this.queue.splice(i, 1)
 						}
 					}
 				}
@@ -402,12 +351,12 @@ export default class PostRPCClient {
 					messages.push('event response')
 				}
 
-				if (response.event in this._subscribed) {
+				if (response.event in this.subscribed) {
 					if (this._logging) {
 						messages.push('subscribed, call callback')
 					}
 
-					const subscribe = this._subscribed[response.event]
+					const subscribe = this.subscribed[response.event]
 					const result = response.hasOwnProperty('result') ? response.result : null
 					const error = response.hasOwnProperty('error') ? response.error : null
 
@@ -427,7 +376,7 @@ export default class PostRPCClient {
 	 * @return {Undefined}
 	*/
 	messageHandler (event) {
-		if (this._running && event.origin === this._origin && event.source && event.source !== window) {
+		if (this.running && event.origin === this.origin && event.source && event.source !== window) {
 			this.response(event.data)
 		}
 	}
@@ -452,9 +401,9 @@ export default class PostRPCClient {
 	/* istanbul ignore next */
 	log (messages, collapse = false, color = 'green') {
 		if (collapse) {
-			console.groupCollapsed(this._name)
+			console.groupCollapsed(this.name)
 		} else {
-			console.group(this._name)
+			console.group(this.name)
 		}
 
 		messages.forEach(message => {
@@ -472,7 +421,7 @@ export default class PostRPCClient {
 	*/
 	/* istanbul ignore next */
 	logGroup (group, messages, color = 'green') {
-		console.group(this._name)
+		console.group(this.name)
 		console.groupCollapsed(group)
 
 		messages.forEach(message => {

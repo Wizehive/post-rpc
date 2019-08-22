@@ -356,7 +356,7 @@ export default class PostRPCServer {
 			const messages = []
 
 			if (this._logging) {
-				messages = ['publish: name: ' + name + ', result: ' + JSON.stringify(result)]
+				messages.push('publish: name: ' + name + ', result: ' + JSON.stringify(result))
 			}
 
 			for (let i = 0; i < window.frames.length; i++) {
@@ -419,7 +419,7 @@ export default class PostRPCServer {
 	}
 
   /**
-   * Wrap postMessage for testablity
+   * Send message to client over postMessage
    * @param {Window} targetWindow
    * @param {Object} message
    * @param {String} targetOrigin
@@ -432,7 +432,7 @@ export default class PostRPCServer {
 	}
 
   /**
-   * Wrap request for testablity
+   * Process requests
    * @param {Object} request
    * @param {Window} targetWindow
    * @return {Undefined}
@@ -443,7 +443,7 @@ export default class PostRPCServer {
 			const messages = []
 
 			if (this._logging) {
-				messages = ['request: ' + JSON.stringify(request)]
+				messages.push('request: ' + JSON.stringify(request))
 			}
 
 			if (!this.isValid(request)) {
