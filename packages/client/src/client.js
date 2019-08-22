@@ -256,7 +256,7 @@ export default class PostRPCClient {
 					const messages = []
 
 					if (this._logging) {
-						messages = ['call expired, id: ' + call.id]
+						messages.push('call expired, id: ' + call.id)
 					}
 
 					if (call.callback !== null) {
@@ -306,7 +306,7 @@ export default class PostRPCClient {
 			const messages = []
 
 			if (this._logging) {
-				messages = ['response: ' + JSON.stringify(response)]
+				messages.push('response: ' + JSON.stringify(response))
 			}
 
 			if (response && response.id) {	// Call
