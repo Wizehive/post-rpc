@@ -13,7 +13,7 @@ module.exports = ({ env = 'dev', name }) => {
   return {
     mode: env === 'prod' ? 'production' : 'development',
     entry: path.join(__dirname, 'packages', name, 'src', name) + '.js',
-    devtool: env !== 'prod' && 'source-map',
+    devtool: 'source-map',
     optimization: {
       minimize: env === 'prod'
     },
