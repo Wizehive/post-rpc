@@ -419,7 +419,7 @@ export default class PostRPCServer {
 	}
 
   /**
-   * Wrap postMessage for testablity
+   * Send message to client over postMessage
    * @param {Window} targetWindow
    * @param {Object} message
    * @param {String} targetOrigin
@@ -432,7 +432,7 @@ export default class PostRPCServer {
 	}
 
   /**
-   * Wrap request for testablity
+   * Process requests
    * @param {Object} request
    * @param {Window} targetWindow
    * @return {Undefined}

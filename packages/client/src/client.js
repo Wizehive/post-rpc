@@ -284,7 +284,7 @@ export default class PostRPCClient {
 	}
 
 	/**
-	 * Wrap postMessage for testablity
+	 * Send data to parent over postMessage
 	 * @param {Window} targetWindow
 	 * @param {Object} message
 	 * @param {String} targetOrigin
@@ -297,7 +297,7 @@ export default class PostRPCClient {
 	}
 
 	/**
-	 * Wrap response for testablity
+	 * Process reponses
 	 * @param {Object} response
 	 * @return {Undefined}
 	*/
