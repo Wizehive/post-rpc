@@ -309,7 +309,8 @@ export default class PostRPCClient {
 				messages.push('response: ' + JSON.stringify(response))
 			}
 
-			if (response && response.id) {	// Call
+			// Payload is in response to a call
+			if (response && response.id) {
 				if (this._logging) {
 					messages.push('call response')
 				}
@@ -317,7 +318,7 @@ export default class PostRPCClient {
 				for (let i = this.queue.length - 1; i >= 0; i--) {
 					const call = this.queue[i]
 
-					// Match to queue
+					// Found matching call in the queue, begin processing
 					if (response.id === call.id) {
 						const result = response.hasOwnProperty('result') ? response.result : null
 						const error = response.hasOwnProperty('error') ? response.error : null
@@ -346,7 +347,8 @@ export default class PostRPCClient {
 						}
 					}
 				}
-			} else if (response && response.event) {	// Event
+			// Payload is from an event
+			} else if (response && response.event) {
 				if (this._logging) {
 					messages.push('event response')
 				}
