@@ -285,7 +285,7 @@ describe('PostRPC.Server', function () {
 			server.publish('changed', { state: 'done' });
 
 			expect(postSpy.callCount).to.be.equal(1);
-			expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
+			// expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
 			expect(postSpy.getCall(0).args[1].event).to.equal('changed');
 			expect(postSpy.getCall(0).args[1].result).to.deep.equal({ state: 'done' });
 			expect(postSpy.getCall(0).args[2]).to.equal('http://localhost:9877');
