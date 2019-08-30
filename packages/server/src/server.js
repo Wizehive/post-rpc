@@ -332,10 +332,10 @@ export default class PostRPCServer {
 		}
 	}
 
-  /**
-   * JSON-RPC v2+ event notification response
-   * @return {Object} response
-  */
+	/**
+	 * JSON-RPC v2+ event notification response
+	 * @return {Object} response
+	 */
 	event (name, result) {
 		return {
 			jsonrpc,
@@ -345,13 +345,13 @@ export default class PostRPCServer {
 		}
 	}
 
-  /**
-   * Publish event notification to all child iFrame windows
-   * @param {String} name of event
-   * @param {Object} result
-   * @return {Undefined}
-  */
-	publish (name, result) {
+	/**
+	 * Publish an event notification to all available iFrame windows
+	 * @param {String} name of event
+	 * @param {Object} result
+	 * @return {Undefined}
+	 */
+	broadcast (name, result) {
 		if (this.running) {
 			const messages = []
 
@@ -367,6 +367,24 @@ export default class PostRPCServer {
 				messages.push('(' + window.frames.length + ') post publish')
 				this.log(messages)
 			}
+		} else {
+			throw new Error('Server is not running')
+		}
+	}
+
+	/**
+	 * Publish an event notification to only the registered child iframe
+	 * @param {String} name of event
+	 * @param {Object} payload
+	 * @return {Undefined}
+	*/
+	publish (name, payload) {
+		if (this.running) {
+			if (this._logging) {
+				this.log(['publish: name: ' + name + ', payload: ' + JSON.stringify(payload)])
+			}
+
+			this.post(this.childWindow, this.event(name, payload), this.origin)
 		} else {
 			throw new Error('Server is not running')
 		}
@@ -574,12 +592,12 @@ export default class PostRPCServer {
 	log (messages, color = 'blue') {
 		console.group(this.name)
 
-				messages.forEach(message => {
-					console.log('%c%s', 'color:' + color, message)
-				})
+		messages.forEach(message => {
+			console.log('%c%s', 'color:' + color, message)
+		})
 
-				console.groupEnd()
-			}
+		console.groupEnd()
+	}
 
   /**
    * Log group messages to console

@@ -356,11 +356,12 @@ export default class PostRPCClient {
 						messages.push('subscribed, call callback')
 					}
 
-					const subscribe = this.subscribed[response.event]
+					const subscription = this.subscribed[response.event]
 					const result = response.hasOwnProperty('result') ? response.result : null
-					const error = response.hasOwnProperty('error') ? response.error : null
 
-					subscribe.callback(result, error)
+					if (result && subscription && typeof subscription.callback === 'function') {
+						subscription.callback(result)
+					}
 				}
 			}
 
