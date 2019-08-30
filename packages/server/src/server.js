@@ -336,12 +336,12 @@ export default class PostRPCServer {
    * JSON-RPC v2+ event notification response
    * @return {Object} response
   */
-	event (result, name) {
+	event (name, result) {
 		return {
-			jsonrpc: jsonrpc,
-			result: result,
-			event: name,
-			id: null
+			jsonrpc,
+			id: null,
+			result,
+			event: name
 		}
 	}
 
@@ -360,7 +360,7 @@ export default class PostRPCServer {
 			}
 
 			for (let i = 0; i < window.frames.length; i++) {
-				this.post(window.frames[i], this.event(result, name), '*')
+				this.post(window.frames[i], this.event(name, result), '*')
 			}
 
 			if (this._logging) {
@@ -572,9 +572,7 @@ export default class PostRPCServer {
   */
 	/* istanbul ignore next */
 	log (messages, color = 'blue') {
-		if (this._logging) {
-			if (this._logging) {
-				console.group(this._name)
+		console.group(this.name)
 
 				messages.forEach(message => {
 					console.log('%c%s', 'color:' + color, message)
@@ -582,8 +580,6 @@ export default class PostRPCServer {
 
 				console.groupEnd()
 			}
-		}
-	}
 
   /**
    * Log group messages to console
@@ -593,7 +589,7 @@ export default class PostRPCServer {
   */
 	/* istanbul ignore next */
 	logGroup (group, messages, color = 'blue') {
-		console.group(this._name)
+		console.group(this.name)
 		console.groupCollapsed(group)
 
 		messages.forEach(message => {
