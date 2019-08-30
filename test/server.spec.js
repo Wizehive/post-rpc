@@ -258,7 +258,7 @@ describe('PostRPC.Server', function () {
 
 	describe('event', function () {
 		it('should be correct response', function () {
-			expect(server.event({ state: 'done' }, 'changed')).to.deep.equal({
+			expect(server.event('changed', { state: 'done' })).to.deep.equal({
 				jsonrpc: '2.0',
 				result: {
 					state: 'done'
@@ -288,7 +288,7 @@ describe('PostRPC.Server', function () {
 			expect(postSpy.getCall(0).args[0]).to.equal(clientWindow);
 			expect(postSpy.getCall(0).args[1].event).to.equal('changed');
 			expect(postSpy.getCall(0).args[1].result).to.deep.equal({ state: 'done' });
-			expect(postSpy.getCall(0).args[2]).to.equal('*');
+			expect(postSpy.getCall(0).args[2]).to.equal('http://localhost:9877');
 		});
 
 		afterEach(function () {
@@ -467,7 +467,7 @@ describe('PostRPC.Server', function () {
 							},
 							id: 1
 						});
-						expect(postSpy.getCall(0).args[2]).to.equal('*');
+						expect(postSpy.getCall(0).args[2]).to.equal('http://localhost:9877');
 					});
 			});
 		});
