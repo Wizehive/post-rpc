@@ -322,16 +322,14 @@ export default class PostRPCClient {
 						const result = response.hasOwnProperty('result') ? response.result : null
 						const error = response.hasOwnProperty('error') ? response.error : null
 
-						if (call.callback !== null) {
+						if (typeof call.callback === 'function') {
 							if (this._logging) {
 								messages.push('called, call callback')
 							}
 
-							call.callback(result, error)
+							call.callback(error, result)
 							this.queue.splice(i, 1)
-						}
-
-						if (call.resolve !== null || call.reject !== null) {
+						} else if (typeof call.resolve === 'function' && typeof call.reject === 'function') {
 							if (this._logging) {
 								messages.push('called, resolve/reject promise')
 							}
@@ -343,6 +341,8 @@ export default class PostRPCClient {
 							}
 
 							this.queue.splice(i, 1)
+						} else {
+							throw new Error(`Unable to find or assign a handler for this call: ${JSON.stringify(call)}`)
 						}
 					}
 				}
