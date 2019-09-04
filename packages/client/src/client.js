@@ -259,7 +259,7 @@ export default class PostRPCClient {
 						messages.push('call expired, id: ' + call.id)
 					}
 
-					if (call.callback !== null) {
+					if (typeof call.callback === 'function') {
 						if (this._logging) {
 							messages.push('timeout, call callback')
 						}
@@ -271,6 +271,8 @@ export default class PostRPCClient {
 						}
 
 						call.reject(this.timeoutResponse(call.id)['error'])
+					} else {
+						throw new Error(`Unable to find or assign a handler for this call: ${JSON.stringify(call)}`)
 					}
 
 					this.queue.splice(i, 1)
