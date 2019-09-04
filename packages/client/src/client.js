@@ -272,6 +272,8 @@ export default class PostRPCClient {
 
 						call.reject(this.timeoutResponse(call.id)['error'])
 					} else {
+						this.queue.splice(i, 1)
+
 						throw new Error(`Unable to find or assign a handler for this call: ${JSON.stringify(call)}`)
 					}
 
@@ -345,6 +347,8 @@ export default class PostRPCClient {
 
 							this.queue.splice(i, 1)
 						} else {
+							this.queue.splice(i, 1)
+
 							throw new Error(`Unable to find or assign a handler for this call: ${JSON.stringify(call)}`)
 						}
 					}
