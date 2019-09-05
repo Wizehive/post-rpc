@@ -332,26 +332,26 @@ export default class PostRPCServer {
 		}
 	}
 
-  /**
-   * JSON-RPC v2+ event notification response
-   * @return {Object} response
-  */
-	event (result, name) {
+	/**
+	 * JSON-RPC v2+ event notification response
+	 * @return {Object} response
+	 */
+	event (name, result) {
 		return {
-			jsonrpc: jsonrpc,
-			result: result,
-			event: name,
-			id: null
+			jsonrpc,
+			id: null,
+			result,
+			event: name
 		}
 	}
 
-  /**
-   * Publish event notification to all child iFrame windows
-   * @param {String} name of event
-   * @param {Object} result
-   * @return {Undefined}
-  */
-	publish (name, result) {
+	/**
+	 * Publish an event notification to all available iFrame windows
+	 * @param {String} name of event
+	 * @param {Object} result
+	 * @return {Undefined}
+	 */
+	broadcast (name, result) {
 		if (this.running) {
 			const messages = []
 
@@ -360,13 +360,31 @@ export default class PostRPCServer {
 			}
 
 			for (let i = 0; i < window.frames.length; i++) {
-				this.post(window.frames[i], this.event(result, name), '*')
+				this.post(window.frames[i], this.event(name, result), '*')
 			}
 
 			if (this._logging) {
 				messages.push('(' + window.frames.length + ') post publish')
 				this.log(messages)
 			}
+		} else {
+			throw new Error('Server is not running')
+		}
+	}
+
+	/**
+	 * Publish an event notification to only the registered child iframe
+	 * @param {String} name of event
+	 * @param {Object} payload
+	 * @return {Undefined}
+	*/
+	publish (name, payload) {
+		if (this.running) {
+			if (this._logging) {
+				this.log(['publish: name: ' + name + ', payload: ' + JSON.stringify(payload)])
+			}
+
+			this.post(this.childWindow, this.event(name, payload), this.origin)
 		} else {
 			throw new Error('Server is not running')
 		}
@@ -572,17 +590,13 @@ export default class PostRPCServer {
   */
 	/* istanbul ignore next */
 	log (messages, color = 'blue') {
-		if (this._logging) {
-			if (this._logging) {
-				console.group(this._name)
+		console.group(this.name)
 
-				messages.forEach(message => {
-					console.log('%c%s', 'color:' + color, message)
-				})
+		messages.forEach(message => {
+			console.log('%c%s', 'color:' + color, message)
+		})
 
-				console.groupEnd()
-			}
-		}
+		console.groupEnd()
 	}
 
   /**
@@ -593,7 +607,7 @@ export default class PostRPCServer {
   */
 	/* istanbul ignore next */
 	logGroup (group, messages, color = 'blue') {
-		console.group(this._name)
+		console.group(this.name)
 		console.groupCollapsed(group)
 
 		messages.forEach(message => {
@@ -603,61 +617,4 @@ export default class PostRPCServer {
 		console.groupEnd()
 		console.groupEnd()
 	}
-
-  /**
-   * Log all registered RPC's
-   * @return {Array[Object]} rpcs
-   */
-	/* istanbul ignore next */
-	logRegistered (color = 'blue') {
-		console.group(this._name)
-		console.group('registered')
-
-		Object.keys(this.registered)
-			.map(key => [key, this.registered[key]])
-			.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)
-			.forEach(currentLog => {
-				const messages = []
-				const method = currentLog[0]
-				const r = currentLog[1]
-				const params = []
-				const params2 = []
-
-				const types = {
-					'Boolean': 'true',
-					'Null': 'null',
-					'Undefined': 'undefined',
-					'Number': '1',
-					'String': 'str',
-					'Object': '{a: 1}',
-					'Array': '[1,2]'
-				}
-
-				messages.push('/**')
-				messages.push(' * ' + r.description)
-
-				r.params.forEach(param => {
-					messages.push(' * @param {' + param[1] + '} ' + param[0])
-					params.push(param[0])
-					params2.push(param[0] + ': ' + types[param[1]])
-				})
-
-				messages.push(' * @return {' + r.return + '}')
-				messages.push(' */')
-				messages.push(method + '(' + params.join(', ') + ')')
-				messages.push('client.call(\'' + method + '\', {' + params2.join(', ') + '}, func)')
-
-				console.groupCollapsed(method)
-
-				messages.forEach(message => {
-					console.log('%c%s', 'color:' + color, message)
-				})
-
-				console.groupEnd()
-			})
-
-		console.groupEnd()
-		console.groupEnd()
-	}
-
 }

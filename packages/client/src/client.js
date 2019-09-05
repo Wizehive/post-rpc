@@ -259,7 +259,7 @@ export default class PostRPCClient {
 						messages.push('call expired, id: ' + call.id)
 					}
 
-					if (call.callback !== null) {
+					if (typeof call.callback === 'function') {
 						if (this._logging) {
 							messages.push('timeout, call callback')
 						}
@@ -271,6 +271,10 @@ export default class PostRPCClient {
 						}
 
 						call.reject(this.timeoutResponse(call.id)['error'])
+					} else {
+						this.queue.splice(i, 1)
+
+						throw new Error(`Unable to find or assign a handler for this call: ${JSON.stringify(call)}`)
 					}
 
 					this.queue.splice(i, 1)
@@ -309,7 +313,8 @@ export default class PostRPCClient {
 				messages.push('response: ' + JSON.stringify(response))
 			}
 
-			if (response && response.id) {	// Call
+			// Payload is in response to a call
+			if (response && response.id) {
 				if (this._logging) {
 					messages.push('call response')
 				}
@@ -317,21 +322,19 @@ export default class PostRPCClient {
 				for (let i = this.queue.length - 1; i >= 0; i--) {
 					const call = this.queue[i]
 
-					// Match to queue
+					// Found matching call in the queue, begin processing
 					if (response.id === call.id) {
 						const result = response.hasOwnProperty('result') ? response.result : null
 						const error = response.hasOwnProperty('error') ? response.error : null
 
-						if (call.callback !== null) {
+						if (typeof call.callback === 'function') {
 							if (this._logging) {
 								messages.push('called, call callback')
 							}
 
-							call.callback(result, error)
+							call.callback(error, result)
 							this.queue.splice(i, 1)
-						}
-
-						if (call.resolve !== null || call.reject !== null) {
+						} else if (typeof call.resolve === 'function' && typeof call.reject === 'function') {
 							if (this._logging) {
 								messages.push('called, resolve/reject promise')
 							}
@@ -343,10 +346,15 @@ export default class PostRPCClient {
 							}
 
 							this.queue.splice(i, 1)
+						} else {
+							this.queue.splice(i, 1)
+
+							throw new Error(`Unable to find or assign a handler for this call: ${JSON.stringify(call)}`)
 						}
 					}
 				}
-			} else if (response && response.event) {	// Event
+			// Payload is from an event
+			} else if (response && response.event) {
 				if (this._logging) {
 					messages.push('event response')
 				}
@@ -356,11 +364,12 @@ export default class PostRPCClient {
 						messages.push('subscribed, call callback')
 					}
 
-					const subscribe = this.subscribed[response.event]
+					const subscription = this.subscribed[response.event]
 					const result = response.hasOwnProperty('result') ? response.result : null
-					const error = response.hasOwnProperty('error') ? response.error : null
 
-					subscribe.callback(result, error)
+					if (result && subscription && typeof subscription.callback === 'function') {
+						subscription.callback(result)
+					}
 				}
 			}
 
