@@ -196,7 +196,20 @@ export default class PostRPCClient {
 	 * @param {Number} timeout in MS to await response
 	 * @return {Undefined}
 	*/
-	call (method, params, callback = null, timeout = 5000) {
+	call (details) {
+		if (!details) {
+			throw new Error(`Call must be made with an object containing a method and any necessary params
+			ex: client.call({ method: 'getStuff', params: { one: 'thing' } })
+			ex: client.call({
+				method: 'getStuff',
+				params: { one: 'thing' },
+				timeout: 10000,
+				callback: stuff => console.log(stuff)
+			})`)
+		}
+
+		const { method, params, callback = null, timeout = 5000 } = details
+
 		if (!this.running) {
 			throw new Error('Client is not running')
 		}
