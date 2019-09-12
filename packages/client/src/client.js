@@ -336,13 +336,21 @@ export default class PostRPCClient {
 							this.queue.splice(i, 1)
 						} else if (typeof call.resolve === 'function' && typeof call.reject === 'function') {
 							if (this._logging) {
-								messages.push('called, resolve/reject promise')
+								messages.push('called, promise')
 							}
 
 							if (error) {
 								call.reject(error)
+
+								if (this._logging) {
+									messages.push('promise rejected')
+								}
 							} else {
 								call.resolve(result)
+
+								if (this._logging) {
+									messages.push('promise resolved')
+								}
 							}
 
 							this.queue.splice(i, 1)
