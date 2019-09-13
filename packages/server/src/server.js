@@ -457,8 +457,6 @@ export default class PostRPCServer {
    * @return {Undefined}
   */
 	request (request, targetWindow) {
-		console.log(request)
-
 		if (this.running) {
 			const messages = []
 

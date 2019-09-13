@@ -199,7 +199,7 @@ export default class PostRPCClient {
 	 * @returns {Undefined}
 	*/
 	call (details) {
-		if (!details) {
+		if (!details || !details.method) {
 			throw new Error(`Call must be made with an object containing at least a method and any necessary args
 			ex: client.call({ method: 'getStuff', args: { one: 'thing' } })
 			ex: client.call({
