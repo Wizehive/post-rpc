@@ -41,9 +41,9 @@ const methodNotFoundCode = -32601,
 	methodNotFoundMessage = 'Method not found',
 	methodNotFoundData = 'The method does not exist / is not available'
 
-const invalidParamsCode = -32602,
-	invalidParamsMessage = 'Invalid params',
-	invalidParamsData = 'Invalid method parameter(s)'
+const invalidArgsCode = -32602,
+	invalidArgsMessage = 'Invalid args',
+	invalidArgsData = 'Invalid method argument(s)'
 
 const internalErrorCode = -32603,
 	internalErrorMessage = 'Internal error',
@@ -86,27 +86,28 @@ export default class PostRPCServer {
   /**
    * Register RPC method
    * @param {String} method
-   * @param {Object|Array[string]} param signature of method
-   * @param {Type} ret signature of return
+   * @param {Object|Array[string]} paramDefinitions signature of method
+   * @param {Type} returns signature of return
    * @param {Function} func function to perform call
+   * @param {String} description optional
    * @return {Boolean}
   */
-	register (method, params, ret, func, desc) {
+	register (method, paramDefinitions, returns, func, description) {
 		if (this._logging) {
 			this.logGroup('register', [
 				'method: ' + method,
-				'params: ' + JSON.stringify(params),
-				'return: ' + JSON.stringify(ret),
+				'expected args: ' + JSON.stringify(paramDefinitions),
+				'return: ' + JSON.stringify(returns),
 				'function: function() {}',
-				'description: ' + desc
+				'description: ' + description
 			])
 		}
 
 		this.registered[method] = {
-			params: params,
-			return: ret,
-			function: func,
-			description: desc
+			expectedParams: paramDefinitions,
+			returns,
+			func,
+			description
 		}
 
 		return true
@@ -214,9 +215,9 @@ export default class PostRPCServer {
 			jsonrpc,
 			id: request.id,
 			error: {
-				code: invalidParamsCode,
-				message: invalidParamsMessage,
-				data: invalidParamsData
+				code: invalidArgsCode,
+				message: invalidArgsMessage,
+				data: invalidArgsData
 			}
 		}
 	}
@@ -417,23 +418,23 @@ export default class PostRPCServer {
 	}
 
   /**
-   * Map given parameters according to required
+   * Map given arguments according to required parameters of a method
    * @param {Object|Array} given
-   * @param {Array[Array]} required
-   * @return {Array} params
+   * @param {Array[]} required
+   * @return {Array} resulting sanitized args
   */
-	mapParams (given, required) {
-		const params = []
+	mapArgs (given, required) {
+		const resultingArgs = []
 
-		required.forEach((param, i) => {
+		required.forEach((arg, i) => {
 			if (Array.isArray(given) && i < given.length) {
-				params.push(given[i])
-			} else if (given !== null && typeof given === 'object' && param[0] in given) {
-				params.push(given[param[0]])
+				resultingArgs.push(given[i])
+			} else if (given !== null && typeof given === 'object' && arg[0] in given) {
+				resultingArgs.push(given[arg[0]])
 			}
 		})
 
-		return params
+		return resultingArgs
 	}
 
   /**
@@ -456,6 +457,7 @@ export default class PostRPCServer {
    * @return {Undefined}
   */
 	request (request, targetWindow) {
+		console.log(request)
 
 		if (this.running) {
 			const messages = []
@@ -478,10 +480,10 @@ export default class PostRPCServer {
 				this.post(targetWindow, this.methodNotFoundResponse(request), '*')
 			} else {
 				const rpc = this.registered[request.method]
-				const func = rpc.function
-				const args = this.mapParams(request.params, rpc.params)
+				const func = rpc.func
+				const args = this.mapArgs(request.args, rpc.expectedParams)
 
-				if (args.length !== rpc.params.length) {
+				if (args.length !== rpc.expectedParams.length) {
 					if (this._logging) {
 						messages.push('post invalid params')
 					}
