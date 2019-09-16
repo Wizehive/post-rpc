@@ -70,7 +70,7 @@ const server = new window.PostRPC.Server('http://localhost:5001');
 
 ### Registering RPC's
 
-In order to respond to client RPC requests, the server must register each RCP method, describing it and binding it to a function:
+In order to respond to client RPC requests, the server must register each RPC method, describing it and binding it to a function:
 
 ```
 server.register('add',[['a', 'Number'], ['b', 'Number']], 'Number', add, 'Calculate the sum of two numbers');
