@@ -29,29 +29,35 @@
 
 const jsonrpc = '2.0'
 
-const parseErrorCode = -32700,
-	parseErrorMessage = 'Parse error',
-	parseErrorData = 'Invalid JSON was received by the server'
+const parseErrorCode = -32700
+const parseErrorMessage = (request = {}) =>{
+	return `Parse error: Invalid JSON was received by the server during a ${request.method} call.`
+}
 
-const invalidRequestCode = -32600,
-	invalidRequestMessage = 'Invalid request',
-	invalidRequestData = 'The JSON sent is not a valid request object'
+const invalidRequestCode = -32600
+const invalidRequestMessage = (request = {}) => {
+	return `This JSON sent via ${request.method || 'PostRPC Client'} call is not a valid request object:
+${JSON.stringify(request, null, 2)}`
+}
 
-const methodNotFoundCode = -32601,
-	methodNotFoundMessage = 'Method not found',
-	methodNotFoundData = 'The method does not exist / is not available'
+const methodNotFoundCode = -32601
+const methodNotFoundMessage = (request = {}) => `The ${request.method} method is not available`
 
-const invalidArgsCode = -32602,
-	invalidArgsMessage = 'Invalid args',
-	invalidArgsData = 'Invalid method argument(s)'
+const invalidArgsCode = -32602
+const invalidArgsMessage = (request = {}) => `These args are invalid for the ${request.method} method:
+${JSON.stringify(request.args, null, 2)}`
 
-const internalErrorCode = -32603,
-	internalErrorMessage = 'Internal error',
-	internalErrorData = 'Internal JSON-RPC server error'
+const internalErrorCode = -32603
+const internalErrorMessage = (request = {}) => {
+	return `An internal JSON-RPC server error occurred while processing a ${request.method} call with these args:
+${JSON.stringify(request.args, null, 2)}`
+}
 
-const invalidReturnCode = -32604,
-	invalidReturnMessage = 'Invalid return',
-	invalidReturnData = 'Invalid method return type'
+const invalidReturnCode = -32604
+const invalidReturnMessage = (request = {}) => {
+	return `Attempted to send an invalid return type while processing a ${request.method} call with these args:
+${JSON.stringify(request.args, null, 2)}`
+}
 
 const errorCode = -32000
 
@@ -162,14 +168,13 @@ export default class PostRPCServer {
    * JSON-RPC v2 parse error response
    * @return {Object} response
   */
-	parseErrorResponse () {
+	parseErrorResponse (request) {
 		return {
 			jsonrpc,
 			id: null,
 			error: {
 				code: parseErrorCode,
-				message: parseErrorMessage,
-				data: parseErrorData
+				message: parseErrorMessage(request)
 			}
 		}
 	}
@@ -184,8 +189,7 @@ export default class PostRPCServer {
 			id: request.id,
 			error: {
 				code: invalidRequestCode,
-				message: invalidRequestMessage,
-				data: invalidRequestData
+				message: invalidRequestMessage(request)
 			}
 		}
 	}
@@ -200,8 +204,7 @@ export default class PostRPCServer {
 			id: request.id,
 			error: {
 				code: methodNotFoundCode,
-				message: methodNotFoundMessage,
-				data: methodNotFoundData
+				message: methodNotFoundMessage(request)
 			}
 		}
 	}
@@ -211,13 +214,13 @@ export default class PostRPCServer {
    * @return {Object} response
   */
 	invalidArgsResponse (request) {
+		console.log(request)
 		return {
 			jsonrpc,
 			id: request.id,
 			error: {
 				code: invalidArgsCode,
-				message: invalidArgsMessage,
-				data: invalidArgsData
+				message: invalidArgsMessage(request)
 			}
 		}
 	}
@@ -232,8 +235,7 @@ export default class PostRPCServer {
 			id: request.id,
 			error: {
 				code: internalErrorCode,
-				message: internalErrorMessage,
-				data: internalErrorData
+				message: internalErrorMessage(request)
 			}
 		}
 	}
@@ -248,8 +250,7 @@ export default class PostRPCServer {
 			id: request.id,
 			error: {
 				code: invalidReturnCode,
-				message: invalidReturnMessage,
-				data: invalidReturnData
+				message: invalidReturnMessage(request)
 			}
 		}
 	}
