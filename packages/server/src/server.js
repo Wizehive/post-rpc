@@ -29,29 +29,35 @@
 
 const jsonrpc = '2.0'
 
-const parseErrorCode = -32700,
-	parseErrorMessage = 'Parse error',
-	parseErrorData = 'Invalid JSON was received by the server'
+const parseErrorCode = -32700
+const parseErrorMessage = (request = {}) =>{
+	return `Parse error: Invalid JSON was received by the server during a ${request.method} call.`
+}
 
-const invalidRequestCode = -32600,
-	invalidRequestMessage = 'Invalid request',
-	invalidRequestData = 'The JSON sent is not a valid request object'
+const invalidRequestCode = -32600
+const invalidRequestMessage = (request = {}) => {
+	return `This JSON sent via ${request.method || 'PostRPC Client'} call is not a valid request object:
+${JSON.stringify(request, null, 2)}`
+}
 
-const methodNotFoundCode = -32601,
-	methodNotFoundMessage = 'Method not found',
-	methodNotFoundData = 'The method does not exist / is not available'
+const methodNotFoundCode = -32601
+const methodNotFoundMessage = (request = {}) => `The ${request.method} method is not available`
 
-const invalidParamsCode = -32602,
-	invalidParamsMessage = 'Invalid params',
-	invalidParamsData = 'Invalid method parameter(s)'
+const invalidArgsCode = -32602
+const invalidArgsMessage = (request = {}) => `These args are invalid for the ${request.method} method:
+${JSON.stringify(request.args, null, 2)}`
 
-const internalErrorCode = -32603,
-	internalErrorMessage = 'Internal error',
-	internalErrorData = 'Internal JSON-RPC server error'
+const internalErrorCode = -32603
+const internalErrorMessage = (request = {}) => {
+	return `An internal JSON-RPC server error occurred while processing a ${request.method} call with these args:
+${JSON.stringify(request.args, null, 2)}`
+}
 
-const invalidReturnCode = -32604,
-	invalidReturnMessage = 'Invalid return',
-	invalidReturnData = 'Invalid method return type'
+const invalidReturnCode = -32604
+const invalidReturnMessage = (request = {}) => {
+	return `Attempted to send an invalid return type while processing a ${request.method} call with these args:
+${JSON.stringify(request.args, null, 2)}`
+}
 
 const errorCode = -32000
 
@@ -86,27 +92,28 @@ export default class PostRPCServer {
   /**
    * Register RPC method
    * @param {String} method
-   * @param {Object|Array[string]} param signature of method
-   * @param {Type} ret signature of return
+   * @param {Object|Array[string]} paramDefinitions signature of method
+   * @param {Type} returns signature of return
    * @param {Function} func function to perform call
+   * @param {String} description optional
    * @return {Boolean}
   */
-	register (method, params, ret, func, desc) {
+	register (method, paramDefinitions, returns, func, description) {
 		if (this._logging) {
 			this.logGroup('register', [
 				'method: ' + method,
-				'params: ' + JSON.stringify(params),
-				'return: ' + JSON.stringify(ret),
+				'expected args: ' + JSON.stringify(paramDefinitions),
+				'return: ' + JSON.stringify(returns),
 				'function: function() {}',
-				'description: ' + desc
+				'description: ' + description
 			])
 		}
 
 		this.registered[method] = {
-			params: params,
-			return: ret,
-			function: func,
-			description: desc
+			expectedParams: paramDefinitions,
+			returns,
+			func,
+			description
 		}
 
 		return true
@@ -161,14 +168,13 @@ export default class PostRPCServer {
    * JSON-RPC v2 parse error response
    * @return {Object} response
   */
-	parseErrorResponse () {
+	parseErrorResponse (request) {
 		return {
 			jsonrpc,
 			id: null,
 			error: {
 				code: parseErrorCode,
-				message: parseErrorMessage,
-				data: parseErrorData
+				message: parseErrorMessage(request)
 			}
 		}
 	}
@@ -183,8 +189,7 @@ export default class PostRPCServer {
 			id: request.id,
 			error: {
 				code: invalidRequestCode,
-				message: invalidRequestMessage,
-				data: invalidRequestData
+				message: invalidRequestMessage(request)
 			}
 		}
 	}
@@ -199,24 +204,23 @@ export default class PostRPCServer {
 			id: request.id,
 			error: {
 				code: methodNotFoundCode,
-				message: methodNotFoundMessage,
-				data: methodNotFoundData
+				message: methodNotFoundMessage(request)
 			}
 		}
 	}
 
   /**
-   * JSON-RPC v2 invalid params response
+   * JSON-RPC v2 invalid arguments response
    * @return {Object} response
   */
-	invalidParamsResponse (request) {
+	invalidArgsResponse (request) {
+		console.log(request)
 		return {
 			jsonrpc,
 			id: request.id,
 			error: {
-				code: invalidParamsCode,
-				message: invalidParamsMessage,
-				data: invalidParamsData
+				code: invalidArgsCode,
+				message: invalidArgsMessage(request)
 			}
 		}
 	}
@@ -231,8 +235,7 @@ export default class PostRPCServer {
 			id: request.id,
 			error: {
 				code: internalErrorCode,
-				message: internalErrorMessage,
-				data: internalErrorData
+				message: internalErrorMessage(request)
 			}
 		}
 	}
@@ -247,8 +250,7 @@ export default class PostRPCServer {
 			id: request.id,
 			error: {
 				code: invalidReturnCode,
-				message: invalidReturnMessage,
-				data: invalidReturnData
+				message: invalidReturnMessage(request)
 			}
 		}
 	}
@@ -417,23 +419,23 @@ export default class PostRPCServer {
 	}
 
   /**
-   * Map given parameters according to required
+   * Map given arguments according to required parameters of a method
    * @param {Object|Array} given
-   * @param {Array[Array]} required
-   * @return {Array} params
+   * @param {Array[]} required
+   * @return {Array} resulting sanitized args
   */
-	mapParams (given, required) {
-		const params = []
+	mapArgs (given, required) {
+		const resultingArgs = []
 
-		required.forEach((param, i) => {
+		required.forEach((arg, i) => {
 			if (Array.isArray(given) && i < given.length) {
-				params.push(given[i])
-			} else if (given !== null && typeof given === 'object' && param[0] in given) {
-				params.push(given[param[0]])
+				resultingArgs.push(given[i])
+			} else if (given !== null && typeof given === 'object' && arg[0] in given) {
+				resultingArgs.push(given[arg[0]])
 			}
 		})
 
-		return params
+		return resultingArgs
 	}
 
   /**
@@ -456,7 +458,6 @@ export default class PostRPCServer {
    * @return {Undefined}
   */
 	request (request, targetWindow) {
-
 		if (this.running) {
 			const messages = []
 
@@ -478,15 +479,15 @@ export default class PostRPCServer {
 				this.post(targetWindow, this.methodNotFoundResponse(request), '*')
 			} else {
 				const rpc = this.registered[request.method]
-				const func = rpc.function
-				const args = this.mapParams(request.params, rpc.params)
+				const func = rpc.func
+				const args = this.mapArgs(request.args, rpc.expectedParams)
 
-				if (args.length !== rpc.params.length) {
+				if (args.length !== rpc.expectedParams.length) {
 					if (this._logging) {
-						messages.push('post invalid params')
+						messages.push('post invalid args')
 					}
 
-					this.post(targetWindow, this.invalidParamsResponse(request), '*')
+					this.post(targetWindow, this.invalidArgsResponse(request), '*')
 				} else {
 					if (this._logging) {
 						messages.push('call: ' + request.method + '(' + args.join(', ') + ')')

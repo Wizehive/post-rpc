@@ -147,11 +147,11 @@ export default class PostRPCClient {
 	 * JSON-RPC v2 request
 	 * @return {Object} response
 	*/
-	request (method, params, id) {
+	request (method, args, id) {
 		return {
 			jsonrpc,
 			method,
-			params,
+			args,
 			id
 		}
 	}
@@ -190,13 +190,28 @@ export default class PostRPCClient {
 
 	/**
 	 * Call a registered RPC
-	 * @param {String} method
-	 * @param {Object|Array} params
-	 * @param {Function} callback to return response
-	 * @param {Number} timeout in MS to await response
-	 * @return {Undefined}
+	 * @param {{
+	 * 	method: String
+	 * 	args?: Object|Array
+	 * 	callback?: Function
+	 * 	timeout?: Number
+	 * }} details
+	 * @returns {Undefined}
 	*/
-	call (method, params, callback = null, timeout = 5000) {
+	call (details) {
+		if (!details || !details.method) {
+			throw new Error(`Call must be made with an object containing at least a method and any necessary args
+			ex: client.call({ method: 'getStuff', args: { one: 'thing' } })
+			ex: client.call({
+				method: 'getStuff',
+				args: { one: 'thing' },
+				timeout: 10000,
+				callback: stuff => console.log(stuff)
+			})`)
+		}
+
+		const { method, args, callback = null, timeout = 5000 } = details
+
 		if (!this.running) {
 			throw new Error('Client is not running')
 		}
@@ -205,7 +220,7 @@ export default class PostRPCClient {
 			this.log([
 				'call',
 				'method: ' + method,
-				'params: ' + JSON.stringify(params),
+				'args: ' + JSON.stringify(args),
 				'timeout: ' + timeout,
 				'callback: ' + callback
 			])
@@ -223,17 +238,17 @@ export default class PostRPCClient {
 		}
 
 		this.queue.push({
-			method: method,
-			params: params,
+			method,
+			args,
+			timeout,
+			callback,
 			id: this.id,
 			sent: Date.now(),
-			timeout: timeout,
-			callback: callback,
 			resolve: res,
 			reject: rej
 		})
 
-		this.post(this.parent(), this.request(method, params, this.id), this.origin)
+		this.post(this.parent(), this.request(method, args, this.id), this.origin)
 		this.nextID()
 
 		return promise
@@ -336,13 +351,21 @@ export default class PostRPCClient {
 							this.queue.splice(i, 1)
 						} else if (typeof call.resolve === 'function' && typeof call.reject === 'function') {
 							if (this._logging) {
-								messages.push('called, resolve/reject promise')
+								messages.push('called, promise')
 							}
 
 							if (error) {
 								call.reject(error)
+
+								if (this._logging) {
+									messages.push('promise rejected')
+								}
 							} else {
 								call.resolve(result)
+
+								if (this._logging) {
+									messages.push('promise resolved')
+								}
 							}
 
 							this.queue.splice(i, 1)

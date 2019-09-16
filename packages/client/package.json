@@ -1,34 +1,35 @@
 {
-  "name": "@zenginehq/post-rpc-client",
-  "version": "0.6.4",
-  "description": "PostRPC - JSON RPC over PostMessage (Client Library)",
-  "main": "dist/PostRPC.Client.min.js",
-  "files": [
-    "dist/PostRPC.Client.min.js"
-  ],
-  "scripts": {
-    "build": "webpack --env prod",
-    "build-dev": "webpack --env dev",
-    "publish": "npm publish --access public",
-    "watch": "webpack --watch --env prod"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/wizehive/post-rpc.git"
-  },
-  "dependencies": {
-    "native-promise-only": "0.8.1"
-  },
-  "keywords": [
-    "call",
-    "json",
-    "rpc",
-    "postmessage",
-    "iframe",
-    "client"
-  ],
-  "author": "David McNelis",
-  "license": "MIT",
-  "homepage": "https://github.com/wizehive/post-rpc",
-  "gitHead": "1a72e2192fea199d2345bdcc8f00bbfc91406799"
+	"name": "@zenginehq/post-rpc-client",
+	"version": "0.7.1",
+	"description": "PostRPC - JSON RPC over PostMessage (Client Library)",
+	"main": "dist/PostRPC.Client.min.js",
+	"files": [
+		"dist/PostRPC.Client.min.js",
+		"dist/PostRPC.Client.min.js.map"
+	],
+	"scripts": {
+		"build": "webpack --env prod",
+		"build-dev": "webpack --env dev",
+		"publish": "npm publish --access public",
+		"watch": "webpack --watch --env prod"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/wizehive/post-rpc.git"
+	},
+	"dependencies": {
+		"native-promise-only": "0.8.1"
+	},
+	"keywords": [
+		"call",
+		"json",
+		"rpc",
+		"postmessage",
+		"iframe",
+		"client"
+	],
+	"author": "David McNelis",
+	"license": "MIT",
+	"homepage": "https://github.com/wizehive/post-rpc",
+	"gitHead": "73ed7a2919f48b0c214c98e0634370a2b5d6cbce"
 }

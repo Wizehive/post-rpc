@@ -1,6 +1,6 @@
 {
   "name": "@zenginehq/post-rpc-generator",
-  "version": "0.6.2",
+  "version": "0.7.1",
   "description": "Stub Function Generator for PostRPC",
   "main": "generate.js",
   "scripts": {
@@ -31,5 +31,5 @@
   "author": "David McNelis",
   "license": "MIT",
   "homepage": "https://github.com/wizehive/post-rpc",
-  "gitHead": "1a72e2192fea199d2345bdcc8f00bbfc91406799"
+  "gitHead": "73ed7a2919f48b0c214c98e0634370a2b5d6cbce"
 }
