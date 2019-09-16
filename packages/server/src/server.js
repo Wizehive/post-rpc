@@ -207,10 +207,10 @@ export default class PostRPCServer {
 	}
 
   /**
-   * JSON-RPC v2 invalid params response
+   * JSON-RPC v2 invalid arguments response
    * @return {Object} response
   */
-	invalidParamsResponse (request) {
+	invalidArgsResponse (request) {
 		return {
 			jsonrpc,
 			id: request.id,
@@ -483,10 +483,10 @@ export default class PostRPCServer {
 
 				if (args.length !== rpc.expectedParams.length) {
 					if (this._logging) {
-						messages.push('post invalid params')
+						messages.push('post invalid args')
 					}
 
-					this.post(targetWindow, this.invalidParamsResponse(request), '*')
+					this.post(targetWindow, this.invalidArgsResponse(request), '*')
 				} else {
 					if (this._logging) {
 						messages.push('call: ' + request.method + '(' + args.join(', ') + ')')
