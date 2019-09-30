@@ -272,67 +272,35 @@ export default class PostRPCServer {
    * @return {Object} response
   */
 	failure (error, id) {
-		if (this._logging) {
-			this.logGroup('error', [
-				'error: ' + JSON.stringify(error),
-				'id: ' + id
-			])
+
+		let errData = {}
+		let message = 'Error'
+
+        if (error instanceof Error) {
+
+			Object.getOwnPropertyNames(error).forEach((key) => {
+				errData[key] = error[key]
+			})
+
+			message = error.message || error.name
+
+        } else if (typeof error === 'object') {
+            errData = Object.keys(error).reduce((obj, key) => ({ ...obj, [key]: error[key] }), {})
+
+        } else {
+			errData = JSON.stringify(error)
 		}
 
-		if (error instanceof Error) {
-			let errorData
-
-			if (this._logging) {
-				errorData = {}
-
-				Object.getOwnPropertyNames(error).forEach((key) => {
-					errorData[key] = error[key]
-				})
-			} else {
-				errorData = error.message
-			}
-
-			return {
-				jsonrpc,
-				id,
-				error: errorData
-			}
-		} else if (error) {
-			const message = error.name || error.hasOwnProperty('name')
-				? error.name
-				: error.hasOwnProperty('error')
-					? error.error
-					: 'Error'
-
-			const data = error.hasOwnProperty('message')
-				? error.message
-				: error.hasOwnProperty('detail')
-					? error.detail
-					: error.hasOwnProperty('data')
-						? error.data
-						: JSON.stringify(error)
-
-			return {
-				jsonrpc,
-				id,
-				error: {
-					code: errorCode,
-					message,
-					data
-				}
-			}
-		}
-
-		return {
-			jsonrpc,
-			id,
-			error: {
-				code: errorCode,
-				message: 'Error',
-				data: JSON.stringify(error)
-			}
-		}
-	}
+        return {
+            jsonrpc,
+            id,
+            error: {
+                code: errorCode,
+                message: message,
+                data: errData
+            }
+        }
+    }
 
 	/**
 	 * JSON-RPC v2+ event notification response
