@@ -1,6 +1,6 @@
 {
 	"name": "@zenginehq/post-rpc-server",
-	"version": "0.8.2",
+	"version": "0.8.3",
 	"description": "PostRPC - JSON RPC over PostMessage (Server Library)",
 	"main": "dist/PostRPC.Server.min.js",
 	"files": [
