@@ -16,31 +16,6 @@ PostRPC is distributed as two separate javascript bundles. One for the server, a
 
 [Generator](#generating-stubs-from-interface-definitions)
 
-## Development
-
-This project is a [Lerna](https://github.com/lerna/lerna) Monorepo, so consult the Lerna docs for command-specific information.
-
-Server and Client libraries are built by webpack as UMD modules.
-
-To develop locally:
-
-```sh
-# prepare project
-git clone ... && cd post-rpc
-lerna bootstrap --hoist
-
-# build project
-lerna run build
-
-# watch and rebuild project on changes
-lerna run watch
-
-# change output directory of server library by setting this absolute path variable
-POSTRPC_SERVER_OUTPUT_PATH='/Users/my-name/path/to/dest/of/post-rpc-server' lerna run watch
-```
-
-The `POSTRPC_SERVER_OUTPUT_PATH` variable is useful for working in a project that doesn't handle symlinks well, otherwise you can cd into the package you intend to use locally (`packages/client` or `packages/server`) and simply use `npm link` in conjunction with `lerna run watch`.
-
 ## PostRPC.Server
 
 Installation:
@@ -206,183 +181,37 @@ You may optional enable client logging to console for debugging client/server co
 client.logging(true);
 ```
 
-## Generating stubs from Interface Definitions
+## Contributing
 
-Client and server stubs can be generated using an interface defition file (yaml).
+This project is a [Lerna](https://github.com/lerna/lerna) Monorepo, so consult the Lerna docs for command-specific information.
 
-Installation:
+Server and Client libraries are built by webpack as UMD modules.
 
-```
-$ npm i [-g] @zenginehq/post-rpc-generator
-```
+To develop locally:
 
-example.yml:
-```
----
-# Top level array of services
-- description: Person service
-  object: person # optional, functions as members of object
-  functions: # Array of funtions
-  - function: create # Function name
-    args: # Array of arguments for function
-    - arg: first # Argument name
-      type: Number # Argument type
-    - arg: last # Argument name
-      type: Number # Argument type
-    return: Number # Return type
-    description: Create person # Function description
-  - function: update
-    args:
-    - arg: first
-      type: Number
-    - arg: last
-      type: Number
-    return: Number
-    description: Update person
-  - function: delete
-    args:
-    return: Number
-    description: Delete person
-- description: Math service
-  object:
-  functions:
-  - function: add
-    args:
-    - arg: a
-      type: Number
-    - arg: b
-      type: Number
-    return: Number
-    description: Calculate the sum of two numbers
-  - function: subtract
-    args:
-    - arg: a
-      type: Number
-    - arg: b
-      type: Number
-    return: Number
-    description: Calculate the difference between two numbers
-  - function: multiply
-    args:
-    - arg: a
-      type: Number
-    - arg: b
-      type: Number
-    return: Number
-    description: Calculate the product of two numbers
-  - function: divide
-    args:
-    - arg: a
-      type: Number
-    - arg: b
-      type: Number
-    return: Number
-    description: Calculate the divsion of two numbers
-  - function: digits
-    args:
-    - arg: num
-      type: Number
-    - arg: n
-      type: Number
-    return: Number
-    description: Set the precicion for a number
-  - function: getForms
-    args:
-    - arg: version
-      type: Number
-    - arg: workspaceID
-      type: Number
-    return: Array
-    description: Get a list of forms for a workspace
-  - function: getRecords
-    args:
-    - arg: version
-      type: Number
-    - arg: formID
-      type: Number
-    return: Array
-    description: Get a batch of record for a form
-  - function: getWithConfig
-    args:
-    - arg: config
-      type: Object
-    - arg: id
-      type: Number
-    return: Array
-    description: Get a thing with config
+```sh
+# prepare project
+git clone [your-fork-plz] ... && cd post-rpc
+lerna bootstrap --hoist
+
+# build project
+lerna run build
+
+# watch and rebuild project on changes
+lerna run watch
+
+# change output directory of server library by setting this absolute path variable
+POSTRPC_SERVER_OUTPUT_PATH='/Users/my-name/path/to/dest/of/post-rpc-server' lerna run watch
 ```
 
-Generating:
+The `POSTRPC_SERVER_OUTPUT_PATH` variable is useful for working in a project that doesn't handle symlinks well, otherwise you can cd into the package you intend to use locally (`packages/client` or `packages/server`) and simply use `npm link` in conjunction with `lerna run watch`.
 
-```
-$ generate example.yml
-```
+To npm link, `cd` into each package directory and `npm link` there.
 
-Will produce server and server stubs:
+After making changes, run `npm test` at the project root. (This needs improvement.)
 
-example.server.js:
+Make your PR to Wizehive/post-rpc#master
 
-```
-  // Person service
-  //
-  window.server.register('person.create', [['first', 'Number'], ['last', 'Number']], 'Number', person.create, 'Create person');
-  window.server.register('person.update', [['first', 'Number'], ['last', 'Number']], 'Number', person.update, 'Update person');
-  window.server.register('person.delete', [], 'Number', person.delete, 'Delete person');
+If you have permissions to publish, pull latest master and run `lerna publish`.
 
-  // Math service
-  //
-  window.server.register('add', [['a', 'Number'], ['b', 'Number']], 'Number', add, 'Calculate the sum of two numbers');
-  window.server.register('subtract', [['a', 'Number'], ['b', 'Number']], 'Number', subtract, 'Calculate the difference between two numbers');
-  window.server.register('multiply', [['a', 'Number'], ['b', 'Number']], 'Number', multiply, 'Calculate the product of two numbers');
-  window.server.register('divide', [['a', 'Number'], ['b', 'Number']], 'Number', divide, 'Calculate the divsion of two numbers');
-  window.server.register('digits', [['num', 'Number'], ['n', 'Number']], 'Number', digits, 'Set the precicion for a number');
-  window.server.register('getForms', [['version', 'Number'], ['workspaceID', 'Number']], 'Array', getForms, 'Get a list of forms for a workspace');
-  window.server.register('getRecords', [['version', 'Number'], ['formID', 'Number']], 'Array', getRecords, 'Get a batch of record for a form');
-  window.server.register('getWithConfig', [['config', 'Object'], ['id', 'Number']], 'Array', getWithConfig, 'Get a thing with config');
-
-```
-
-example.client.js:
-
-```
-  // Person service
-  //
-  var person = {};
-  person.create = function(first, last) {
-    window.client.call('person.create', { first: first, last: last });
-  }
-  person.update = function(first, last) {
-    window.client.call('person.update', { first: first, last: last });
-  }
-  person.delete = function() {
-    window.client.call('person.delete', {  });
-  }
-
-  // Math service
-  //
-  var add = function(a, b) {
-    window.client.call('add', { a: a, b: b });
-  }
-  var subtract = function(a, b) {
-    window.client.call('subtract', { a: a, b: b });
-  }
-  var multiply = function(a, b) {
-    window.client.call('multiply', { a: a, b: b });
-  }
-  var divide = function(a, b) {
-    window.client.call('divide', { a: a, b: b });
-  }
-  var digits = function(num, n) {
-    window.client.call('digits', { num: num, n: n });
-  }
-  var getForms = function(version, workspaceID) {
-    window.client.call('getForms', { version: version, workspaceID: workspaceID });
-  }
-  var getRecords = function(version, formID) {
-    window.client.call('getRecords', { version: version, formID: formID });
-  }
-  var getWithConfig = function(config, id) {
-    window.client.call('getWithConfig', { config: config, id: id });
-  }
-```
-
+Wizehive devs should consult [Guru](https://app.getguru.com/card/T4M5XoMc/Publishing-PostRPC-library) for more publishing instructions.
