@@ -210,7 +210,7 @@ export default class PostRPCClient {
 			})`)
 		}
 
-		const { method, args, callback = null, timeout = 5000 } = details
+		const { method, args, callback = null, timeout = Infinity } = details
 
 		if (!this.running) {
 			throw new Error('Client is not running')
